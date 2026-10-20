@@ -1,0 +1,11 @@
+// Template persistence for the demo (imported only by route handlers, i.e. server code). A real ERP would use its database,
+// enforce authentication/authorisation and tenant isolation here.
+import { createMemoryTemplateStorage, getPresetTemplate, type TemplateStorage } from "@your-org/erp-label-studio/core";
+
+const globalForStore = globalThis as unknown as { __labelTemplates?: TemplateStorage };
+
+export const templateStore: TemplateStorage =
+  globalForStore.__labelTemplates ??
+  (globalForStore.__labelTemplates = createMemoryTemplateStorage({
+    initial: [getPresetTemplate("textile-hang-tag")!],
+  }));

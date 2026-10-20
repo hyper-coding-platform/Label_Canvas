@@ -1,0 +1,15 @@
+/* The host ERP's own global styles. The label SDK does not touch these. */
+html, body { margin: 0; height: 100%; }
+body { font-family: Georgia, "Times New Roman", serif; background: #fafaf7; color: #222; }
+.erp-shell { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 56px 1fr; min-height: 100vh; }
+.erp-navbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: #0f3d3e; color: #fff; }
+.erp-navbar strong { font-size: 18px; }
+.erp-sidebar { background: #e8efe9; padding: 16px; border-right: 1px solid #c9d6cc; }
+.erp-sidebar a { display: block; padding: 8px 10px; color: #0f3d3e; text-decoration: none; border-radius: 4px; }
+.erp-content { padding: 20px; min-width: 0; }
+.erp-content h1 { margin-top: 0; font-weight: normal; font-size: 24px; }
+.editor-host { height: 680px; }
+@media (max-width: 700px) {
+  .erp-shell { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+  .editor-host { height: 1000px; }
+}

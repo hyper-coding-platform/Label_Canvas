@@ -1,0 +1,24 @@
+# dependencies / build output
+node_modules/
+dist/
+coverage/
+*.tgz
+.next/
+out/
+test-results/
+playwright-report/
+.pack-test/
+.bench-results/
+*.tsbuildinfo
+
+# local user notes (preserved, never committed: see docs/DECISIONS.md D-001)
+/initial_prompt.txt
+/initial recommendations.txt
+/Useful continuation.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.perf-build/

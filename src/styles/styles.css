@@ -1,0 +1,644 @@
+/*
+ * @your-org/erp-label-studio: scoped styles.
+ *
+ * Rules: every selector is scoped under .els-root or .els-preview; no element-only,
+ * html, body or :root selectors; no font imports. All visual values come from
+ * --els-* custom properties, which hosts override via the `theme` prop or CSS.
+ * The editor inherits the host font family unless --els-font-family is set.
+ */
+
+.els-root {
+  --_bg: var(--els-color-bg, #f4f5f7);
+  --_surface: var(--els-color-surface, #ffffff);
+  --_surface-alt: var(--els-color-surface-alt, #f0f2f5);
+  --_border: var(--els-color-border, #d5d9e0);
+  --_text: var(--els-color-text, #1d2330);
+  --_muted: var(--els-color-text-muted, #5b6474);
+  --_accent: var(--els-color-accent, #2563eb);
+  --_accent-text: var(--els-color-accent-text, #ffffff);
+  --_danger: var(--els-color-danger, #b42318);
+  --_warning: var(--els-color-warning, #9a6700);
+  --_focus: var(--els-color-focus, #2563eb);
+  --_canvas: var(--els-color-canvas, #e6e8ec);
+  --_selection: var(--els-color-selection, #2563eb);
+  --_guide: var(--els-color-guide, #e11d74);
+  --_grid: var(--els-color-grid, rgba(0, 0, 0, 0.07));
+  --_radius: var(--els-radius, 6px);
+  --_space: var(--els-space, 8px);
+  --_bw: var(--els-border-width, 1px);
+  --_control-h: var(--els-control-height, 32px);
+  --_shadow: var(--els-shadow, 0 1px 2px rgba(16, 24, 40, 0.06));
+  --_panel-w: var(--els-panel-width, 280px);
+
+  container-type: inline-size;
+  container-name: els;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: var(--els-min-height, 480px);
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  color: var(--_text);
+  background: var(--_bg);
+  font-family: var(--els-font-family, inherit);
+  font-size: var(--els-font-size, 14px);
+  line-height: 1.4;
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+  overflow: hidden;
+  isolation: isolate;
+  position: relative;
+}
+.els-root *,
+.els-root *::before,
+.els-root *::after {
+  box-sizing: border-box;
+}
+.els-root.els-density-compact {
+  --_space: var(--els-space, 6px);
+  --_control-h: var(--els-control-height, 28px);
+  font-size: var(--els-font-size, 13px);
+}
+.els-root[data-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------- utility */
+.els-root .els-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.els-root .els-empty,
+.els-root .els-hint {
+  color: var(--_muted);
+  margin: 0 0 var(--_space);
+  font-size: 0.92em;
+}
+
+/* --------------------------------------------------------------- controls */
+.els-root .els-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--_control-h);
+  min-width: var(--_control-h);
+  padding: 0 calc(var(--_space) * 1.25);
+  margin: 0;
+  font: inherit;
+  color: var(--_text);
+  background: var(--_surface);
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+  cursor: pointer;
+}
+.els-root .els-btn--icon {
+  padding: 0;
+}
+.els-root .els-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.els-root .els-btn--primary {
+  background: var(--_accent);
+  border-color: var(--_accent);
+  color: var(--_accent-text);
+}
+.els-root .els-btn--danger {
+  color: var(--_danger);
+}
+.els-root .els-btn:hover:not(:disabled) {
+  background: var(--_surface-alt);
+}
+.els-root .els-btn--primary:hover:not(:disabled) {
+  background: var(--_accent);
+  filter: brightness(1.08);
+}
+.els-root .els-btn[aria-pressed="true"] {
+  background: var(--_surface-alt);
+  border-color: var(--_border);
+  box-shadow: inset 0 0 0 1px var(--_accent);
+}
+.els-root .els-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.els-root .els-icon {
+  flex: none;
+}
+
+.els-root .els-input {
+  width: 100%;
+  min-height: var(--_control-h);
+  padding: 4px 8px;
+  margin: 0;
+  font: inherit;
+  color: var(--_text);
+  background: var(--_surface);
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+}
+.els-root textarea.els-input {
+  resize: vertical;
+  min-height: calc(var(--_control-h) * 2);
+}
+.els-root .els-input[aria-invalid="true"] {
+  border-color: var(--_danger);
+  border-width: 2px;
+}
+.els-root .els-number {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.els-root .els-number__unit {
+  position: absolute;
+  right: 8px;
+  color: var(--_muted);
+  pointer-events: none;
+  font-size: 0.85em;
+}
+.els-root .els-number .els-input {
+  padding-right: 32px;
+}
+.els-root .els-color {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.els-root .els-color__swatch {
+  flex: none;
+  width: var(--_control-h);
+  height: var(--_control-h);
+  padding: 2px;
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+  background: var(--_surface);
+}
+.els-root .els-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--_control-h);
+  cursor: pointer;
+}
+.els-root .els-file {
+  font: inherit;
+  max-width: 100%;
+}
+
+/* Focus: visible, never colour-only (outline + offset). */
+.els-root :focus-visible {
+  outline: 2px solid var(--_focus);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------- fields */
+.els-root .els-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--_space);
+  min-width: 0;
+}
+.els-root .els-field__label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--_muted);
+}
+.els-root .els-field__hint {
+  font-size: 0.8em;
+  color: var(--_muted);
+}
+.els-root .els-field__error {
+  font-size: 0.85em;
+  color: var(--_danger);
+}
+.els-root .els-section {
+  padding: var(--_space) calc(var(--_space) * 1.5);
+  border-bottom: var(--_bw) solid var(--_border);
+}
+.els-root .els-section__title {
+  margin: 0 0 var(--_space);
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--_muted);
+}
+.els-root .els-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--_space);
+}
+.els-root .els-row,
+.els-root .els-align,
+.els-root .els-layers__order {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--_space);
+}
+
+/* ----------------------------------------------------------------- layout */
+.els-root .els-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px var(--_space);
+  background: var(--_surface);
+  border-bottom: var(--_bw) solid var(--_border);
+}
+.els-root .els-toolbar__item {
+  display: inline-flex;
+  align-items: center;
+}
+.els-root .els-toolbar__sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--_border);
+}
+.els-root .els-toolbar__zoom {
+  margin-left: auto;
+  padding: 0 var(--_space);
+  color: var(--_muted);
+  font-variant-numeric: tabular-nums;
+}
+.els-root .els-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.els-root .els-panel {
+  flex: 0 0 var(--_panel-w);
+  width: var(--_panel-w);
+  min-width: 0;
+  overflow: auto;
+  background: var(--_surface);
+}
+.els-root .els-panel--layers {
+  border-right: var(--_bw) solid var(--_border);
+}
+.els-root .els-panel--properties {
+  border-left: var(--_bw) solid var(--_border);
+}
+.els-root .els-body > .els-panel:last-child.els-panel--layers {
+  border-right: 0;
+  border-left: var(--_bw) solid var(--_border);
+}
+.els-root .els-workspace {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 240px;
+  display: grid;
+  grid-template: 1fr / 1fr;
+}
+.els-root .els-workspace--rulers {
+  grid-template-columns: 20px 1fr;
+  grid-template-rows: 20px 1fr;
+}
+.els-root .els-ruler-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--_muted);
+  background: var(--_surface);
+  border-right: var(--_bw) solid var(--_border);
+  border-bottom: var(--_bw) solid var(--_border);
+}
+.els-root .els-ruler {
+  overflow: hidden;
+  background: var(--_surface);
+}
+.els-root .els-ruler--horizontal {
+  border-bottom: var(--_bw) solid var(--_border);
+}
+.els-root .els-ruler--vertical {
+  border-right: var(--_bw) solid var(--_border);
+}
+.els-root .els-ruler__tick {
+  stroke: var(--_muted);
+  stroke-width: 1;
+}
+.els-root .els-ruler__label {
+  font-size: 9px;
+  fill: var(--_muted);
+}
+.els-root .els-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px calc(var(--_space) * 2);
+  padding: 4px calc(var(--_space) * 1.5);
+  font-size: 0.85em;
+  color: var(--_muted);
+  background: var(--_surface);
+  border-top: var(--_bw) solid var(--_border);
+}
+.els-root .els-status__warn {
+  color: var(--_warning);
+}
+.els-root .els-status__error {
+  color: var(--_danger);
+}
+.els-root .els-status__save {
+  margin-left: auto;
+}
+
+/* ----------------------------------------------------------------- canvas */
+.els-root .els-canvas {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--_canvas);
+  touch-action: none;
+  user-select: none;
+  cursor: default;
+}
+.els-root .els-canvas:focus-visible {
+  outline-offset: -2px;
+}
+.els-root .els-canvas__stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+.els-root .els-canvas__label,
+.els-root .els-canvas__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+}
+.els-root .els-canvas__overlay {
+  overflow: visible;
+}
+.els-root .els-canvas__overlay--dynamic {
+  pointer-events: none;
+}
+.els-root .els-canvas__overlay--dynamic .els-handle {
+  pointer-events: all;
+}
+.els-root .els-canvas__drag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+.els-root .els-canvas__drag > svg {
+  display: block;
+  overflow: visible;
+}
+.els-root .els-canvas__bounds {
+  stroke: var(--_border);
+  stroke-width: 1;
+}
+.els-root .els-grid-line {
+  stroke: var(--_grid);
+}
+.els-root .els-hit {
+  fill: transparent;
+  cursor: move;
+}
+.els-root .els-hit--locked {
+  cursor: not-allowed;
+}
+.els-root .els-selection {
+  fill: none;
+  stroke: var(--_selection);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2; /* pattern + colour: not colour-only */
+}
+.els-root .els-handle {
+  fill: var(--_surface);
+  stroke: var(--_selection);
+  stroke-width: 1.5;
+}
+.els-root .els-resize-preview {
+  fill: none;
+  stroke: var(--_selection);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.els-root .els-guide {
+  stroke: var(--_guide);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.els-root .els-marquee {
+  fill: color-mix(in srgb, var(--_selection) 10%, transparent);
+  stroke: var(--_selection);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.els-root .els-canvas--dragging {
+  cursor: grabbing;
+}
+/* The label layer is visual only; hit targets live in the overlay. */
+.els-root .els-canvas__label {
+  pointer-events: none;
+}
+/* During a drag the pointer is captured by the canvas: skip per-move hit testing of all targets. */
+.els-root .els-canvas--dragging .els-hit,
+.els-root .els-canvas--dragging .els-handle {
+  pointer-events: none;
+}
+.els-root .els-canvas__error {
+  padding: var(--_space);
+  color: var(--_danger);
+}
+
+/* ----------------------------------------------------------------- layers */
+.els-root .els-layers {
+  padding: var(--_space) calc(var(--_space) * 1.5);
+}
+.els-root .els-layers__list {
+  list-style: none;
+  margin: 0 0 var(--_space);
+  padding: 2px;
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+  max-height: 60vh;
+  overflow: auto;
+}
+.els-root .els-layer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: calc(var(--_radius) - 2px);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.els-root .els-layer:hover {
+  background: var(--_surface-alt);
+}
+.els-root .els-layer--selected {
+  background: var(--_surface-alt);
+  border-left-color: var(--_accent); /* plus aria-selected; bar is a non-colour cue too */
+  font-weight: 600;
+}
+.els-root .els-layer--hidden .els-layer__name {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.els-root .els-layer__type {
+  display: inline-flex;
+  color: var(--_muted);
+}
+.els-root .els-layer__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.els-root .els-layer__flags {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--_muted);
+}
+.els-root .els-layer__flag {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.els-root .els-layer__flag:hover {
+  background: var(--_surface);
+  color: var(--_text);
+}
+.els-root .els-layers__list:focus-visible .els-layer--selected {
+  outline: 2px solid var(--_focus);
+  outline-offset: -2px;
+}
+
+/* ----------------------------------------------------------------- dialog */
+/* Rendered inside .els-root (no portal), so it works in tabs, drawers and modals. */
+.els-root .els-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--_space);
+  background: rgba(15, 18, 25, 0.45);
+}
+.els-root .els-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1000px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: calc(var(--_space) * 2);
+  background: var(--_surface);
+  color: var(--_text);
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.els-root .els-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.els-root .els-dialog__title {
+  margin: 0;
+  font-size: 1.15em;
+}
+.els-root .els-dialog__body {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) 1fr;
+  gap: calc(var(--_space) * 2);
+  min-height: 0;
+}
+.els-root .els-dialog__preview {
+  min-height: 320px;
+  border: var(--_bw) solid var(--_border);
+  border-radius: var(--_radius);
+  overflow: hidden;
+  background: #8a8f98;
+}
+.els-root .els-print-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border: 0;
+  display: block;
+}
+@container els (max-width: 760px) {
+  .els-root .els-dialog__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ------------------------------------------------------------ error state */
+.els-root.els-root--error {
+  padding: calc(var(--_space) * 2);
+  min-height: 0;
+}
+.els-root .els-error__title {
+  margin: 0 0 var(--_space);
+  font-size: 1.1em;
+  color: var(--_danger);
+}
+.els-root .els-error__list {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+/* ------------------------------------------------------------- responsive */
+@container els (max-width: 760px) {
+  .els-root .els-body {
+    flex-direction: column;
+    overflow: auto;
+  }
+  .els-root .els-panel {
+    flex: none;
+    width: 100%;
+    max-height: none;
+    border: 0;
+    border-top: var(--_bw) solid var(--_border);
+  }
+  .els-root .els-workspace {
+    order: -1;
+    min-height: 320px;
+    flex: none;
+    height: 55cqh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .els-root *,
+  .els-root *::before,
+  .els-root *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* --------------------------------------------------------------- preview */
+.els-preview {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+}
+.els-preview--error {
+  padding: 8px;
+  border: 1px solid var(--els-color-danger, #b42318);
+  color: var(--els-color-danger, #b42318);
+  font-family: var(--els-font-family, inherit);
+}

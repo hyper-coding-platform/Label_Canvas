@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "useUnknownInCatchVariables": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "@your-org/erp-label-studio": [
+        "./src/entries/index.ts"
+      ],
+      "@your-org/erp-label-studio/core": [
+        "./src/entries/core.ts"
+      ],
+      "@your-org/erp-label-studio/renderer": [
+        "./src/entries/renderer.ts"
+      ],
+      "@your-org/erp-label-studio/headless": [
+        "./src/entries/headless.ts"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "tests",
+    "scripts",
+    "*.config.ts",
+    "examples/basic-react-app/src",
+    "examples/basic-react-app/vite.config.ts"
+  ]
+}
