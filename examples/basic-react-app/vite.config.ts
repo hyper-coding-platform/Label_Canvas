@@ -12,9 +12,9 @@ export default defineConfig({
   root: here,
   resolve: {
     alias: [
-      { find: /^@suriyaprakashm14\/erp-label-studio\/styles\.css$/, replacement: resolve(root, "dist/styles.css") },
-      { find: /^@suriyaprakashm14\/erp-label-studio\/(core|renderer|headless|presets)$/, replacement: resolve(root, "dist/$1.js") },
-      { find: /^@suriyaprakashm14\/erp-label-studio$/, replacement: resolve(root, "dist/index.js") },
+      { find: /^@pythonprakash\/erp-label-studio\/styles\.css$/, replacement: resolve(root, "dist/styles.css") },
+      { find: /^@pythonprakash\/erp-label-studio\/(core|renderer|headless|presets)$/, replacement: resolve(root, "dist/$1.js") },
+      { find: /^@pythonprakash\/erp-label-studio$/, replacement: resolve(root, "dist/index.js") },
     ],
   },
   oxc: { jsx: { runtime: "automatic" } },

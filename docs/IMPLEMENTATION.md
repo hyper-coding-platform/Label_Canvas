@@ -1,6 +1,6 @@
 # How It Is Implemented
 
-This document explains how each part of `@suriyaprakashm14/erp-label-studio` works internally: what
+This document explains how each part of `@pythonprakash/erp-label-studio` works internally: what
 each module does, the rules it follows, and where the code lives. It is meant for developers
 who maintain the SDK or need to understand how it behaves before relying on it.
 

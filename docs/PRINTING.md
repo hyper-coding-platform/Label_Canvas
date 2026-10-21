@@ -24,8 +24,8 @@ physical units and opens the **browser's print dialog**.
 ## API
 
 ```ts
-import { printLabels, buildPrintDocument } from "@suriyaprakashm14/erp-label-studio/core";
-import { getPresetSizes } from "@suriyaprakashm14/erp-label-studio/presets";
+import { printLabels, buildPrintDocument } from "@pythonprakash/erp-label-studio/core";
+import { getPresetSizes } from "@pythonprakash/erp-label-studio/presets";
 
 // Thermal roll: one label per page, page size = label size.
 await printLabels(template, records, { copies: 2 });

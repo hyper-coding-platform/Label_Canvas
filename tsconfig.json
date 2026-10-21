@@ -24,19 +24,19 @@
       "node"
     ],
     "paths": {
-      "@suriyaprakashm14/erp-label-studio": [
+      "@pythonprakash/erp-label-studio": [
         "./src/entries/index.ts"
       ],
-      "@suriyaprakashm14/erp-label-studio/core": [
+      "@pythonprakash/erp-label-studio/core": [
         "./src/entries/core.ts"
       ],
-      "@suriyaprakashm14/erp-label-studio/renderer": [
+      "@pythonprakash/erp-label-studio/renderer": [
         "./src/entries/renderer.ts"
       ],
-      "@suriyaprakashm14/erp-label-studio/headless": [
+      "@pythonprakash/erp-label-studio/headless": [
         "./src/entries/headless.ts"
       ],
-      "@suriyaprakashm14/erp-label-studio/presets": [
+      "@pythonprakash/erp-label-studio/presets": [
         "./src/entries/presets.ts"
       ]
     }

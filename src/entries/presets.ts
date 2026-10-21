@@ -1,5 +1,5 @@
 /**
- * @suriyaprakashm14/erp-label-studio/presets
+ * @pythonprakash/erp-label-studio/presets
  *
  * Built-in label sizes (retail, hang tags, shelf, shipping, A4 sheets, rolls) and
  * industry templates, plus isolated registries for host-specific presets.

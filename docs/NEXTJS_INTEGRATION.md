@@ -9,7 +9,7 @@ verified** (see [TEST_STRATEGY.md](TEST_STRATEGY.md)).
 ## 1. Install
 
 ```bash
-npm install @suriyaprakashm14/erp-label-studio
+npm install @pythonprakash/erp-label-studio
 ```
 
 `react` and `react-dom` are peer dependencies: your app provides them, so no second React
@@ -19,7 +19,7 @@ copy is bundled.
 
 ```tsx
 // app/layout.tsx (server component)
-import "@suriyaprakashm14/erp-label-studio/styles.css";
+import "@pythonprakash/erp-label-studio/styles.css";
 ```
 
 Every rule is scoped under `.els-root` or `.els-preview`. The stylesheet contains no resets,
@@ -47,7 +47,7 @@ export default function StickersPage() {
 // app/stickers/sticker-designer.tsx
 "use client";
 import { useMemo } from "react";
-import { LabelEditor, useTemplateStorage } from "@suriyaprakashm14/erp-label-studio";
+import { LabelEditor, useTemplateStorage } from "@pythonprakash/erp-label-studio";
 import { createFetchTemplateStorage } from "@/lib/fetch-storage"; // your adapter over your API
 import { productSchema, PRODUCTS, toLabelRecord } from "@/lib/erp-data";
 
@@ -75,7 +75,7 @@ handlers, server actions and workers:
 
 ```ts
 // app/api/templates/[id]/route.ts: validate on the server, enforce revisions
-import { parseTemplate, TemplateConflictError } from "@suriyaprakashm14/erp-label-studio/core";
+import { parseTemplate, TemplateConflictError } from "@pythonprakash/erp-label-studio/core";
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const body = await req.json();
   const parsed = parseTemplate(body.template);        // never trust the client
@@ -91,7 +91,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 ```ts
 // app/api/labels/[templateId]/[productId]/route.ts: server-rendered SVG
-import { renderLabel, renderNodeToSvgString } from "@suriyaprakashm14/erp-label-studio/core";
+import { renderLabel, renderNodeToSvgString } from "@pythonprakash/erp-label-studio/core";
 const result = renderLabel(template, record);
 if (!result.ok) return Response.json({ issues: result.issues }, { status: 422 });
 return new Response(renderNodeToSvgString(result.root), { headers: { "content-type": "image/svg+xml; charset=utf-8" } });
@@ -107,7 +107,7 @@ bundle is then never loaded (verified in `tests/browser/editor.spec.ts`).
 
 ```tsx
 "use client";
-import { LabelRenderer } from "@suriyaprakashm14/erp-label-studio/renderer";
+import { LabelRenderer } from "@pythonprakash/erp-label-studio/renderer";
 <LabelRenderer template={template} data={record} />
 ```
 

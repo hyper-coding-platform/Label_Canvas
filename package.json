@@ -1,9 +1,9 @@
 {
-  "name": "@suriyaprakashm14/erp-label-studio",
+  "name": "@pythonprakash/erp-label-studio",
   "version": "0.1.0",
   "description": "Embeddable label designer, deterministic label renderer and barcode SDK for React and Next.js ERP applications.",
   "license": "MIT",
-  "author": "suriyaprakashm14",
+  "author": "pythonprakash",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hyper-coding-platform/Label_Canvas.git"

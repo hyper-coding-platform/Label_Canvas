@@ -113,7 +113,7 @@ result) in the "Verification log" at the bottom.
 - Fixed 2026-10-22 (pre-existing latent defect, exposed by the new first toolbar button): toolbar arrow keys moved from the roving tab stop instead of the focused button.
 - Not verified: React 18; CI host run; physical printing/scanning; manual screen-reader pass.
 - Follow-up optimisation: per-element render caching to cut full re-render cost of committed edits on large templates (≈105 ms at 1,000 elements).
-- Owner decisions before publish: done 2026-10-22: name `@suriyaprakashm14/erp-label-studio`, MIT © suriyaprakashm14, repository/homepage/bugs metadata, absolute README links.
+- Owner decisions before publish: done 2026-10-22: name `@pythonprakash/erp-label-studio`, MIT © pythonprakash, repository/homepage/bugs metadata, absolute README links.
 
 ## Verification log
 

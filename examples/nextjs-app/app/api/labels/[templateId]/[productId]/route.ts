@@ -1,5 +1,5 @@
 // Server-side rendering with the React-free core: returns the label as SVG.
-import { renderLabel, renderNodeToSvgString } from "@suriyaprakashm14/erp-label-studio/core";
+import { renderLabel, renderNodeToSvgString } from "@pythonprakash/erp-label-studio/core";
 import { PRODUCTS, toLabelRecord } from "@/lib/erp-data";
 import { templateStore } from "@/lib/template-store";
 

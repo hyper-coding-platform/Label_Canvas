@@ -1,10 +1,10 @@
 import { StrictMode, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { LabelEditor, darkTheme, type ButtonSlotProps, type LabelTemplate, type SelectSlotProps } from "@suriyaprakashm14/erp-label-studio";
-import { LabelRenderer } from "@suriyaprakashm14/erp-label-studio/renderer";
-import { useEditorCommands, useEditorSelector, useEditorStore, LabelRenderer as HeadlessPreview } from "@suriyaprakashm14/erp-label-studio/headless";
-import { parseTemplate } from "@suriyaprakashm14/erp-label-studio/core";
-import "@suriyaprakashm14/erp-label-studio/styles.css";
+import { LabelEditor, darkTheme, type ButtonSlotProps, type LabelTemplate, type SelectSlotProps } from "@pythonprakash/erp-label-studio";
+import { LabelRenderer } from "@pythonprakash/erp-label-studio/renderer";
+import { useEditorCommands, useEditorSelector, useEditorStore, LabelRenderer as HeadlessPreview } from "@pythonprakash/erp-label-studio/headless";
+import { parseTemplate } from "@pythonprakash/erp-label-studio/core";
+import "@pythonprakash/erp-label-studio/styles.css";
 import { dataSchema, makePerfTemplate, sampleRecords, textileTemplate } from "./fixtures";
 
 const params = new URLSearchParams(location.search);

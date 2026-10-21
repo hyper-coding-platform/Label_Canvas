@@ -1,6 +1,6 @@
 "use client";
 
-// Manual visual-testing playground for @suriyaprakashm14/erp-label-studio.
+// Manual visual-testing playground for @pythonprakash/erp-label-studio.
 // Pick a preset, edit it, check the live preview, print, export/import JSON.
 
 import { useMemo, useState } from "react";
@@ -16,7 +16,7 @@ import {
   renderNodeToSvgString,
   serializeTemplate,
   type LabelTemplate,
-} from "@suriyaprakashm14/erp-label-studio";
+} from "@pythonprakash/erp-label-studio";
 
 const STORAGE_KEY = "playground-template";
 

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@suriyaprakashm14/erp-label-studio` are documented here. The format follows
+All notable changes to `@pythonprakash/erp-label-studio` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
@@ -44,14 +44,14 @@ First implementation, not yet published.
   type `EditorTool`). Hand pans the view by mouse, touch or pen, with arrow keys, or with V/H
   and Escape to switch, and it never changes the template, history or dirty state. `panBy` is in
   `/headless`.
-* `@suriyaprakashm14/erp-label-studio/presets` entry: the built-in sizes and templates
+* `@pythonprakash/erp-label-studio/presets` entry: the built-in sizes and templates
   (`getPresetSizes`, `getPresetTemplates`, `getPresetTemplate`, `createPresetRegistry`).
 
 ### Changed (before first publish)
 
-* Published as **`@suriyaprakashm14/erp-label-studio`** (public, MIT © 2026 suriyaprakashm14).
+* Published as **`@pythonprakash/erp-label-studio`** (public, MIT © 2026 pythonprakash).
 
 * **`/core` no longer exports the preset catalog**, which keeps it within its size budget.
-  Migrate `import { getPresetTemplate } from "@suriyaprakashm14/erp-label-studio/core"` to
-  `"@suriyaprakashm14/erp-label-studio/presets"`. The root entry still re-exports the presets, and
+  Migrate `import { getPresetTemplate } from "@pythonprakash/erp-label-studio/core"` to
+  `"@pythonprakash/erp-label-studio/presets"`. The root entry still re-exports the presets, and
   `cloneTemplate` remains in `/core`.

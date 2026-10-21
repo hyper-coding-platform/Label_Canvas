@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import "@suriyaprakashm14/erp-label-studio/styles.css";
+import "@pythonprakash/erp-label-studio/styles.css";
 
 export const metadata = { title: "Label Studio Playground" };
 

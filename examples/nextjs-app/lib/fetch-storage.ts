@@ -1,6 +1,6 @@
 // Client-side TemplateStorage over the host's own HTTP API (see app/api/templates).
 // This adapter belongs to the host application: the SDK only defines the contract.
-import { LabelStudioError, TemplateConflictError, parseTemplate, type TemplateStorage, type StoredTemplate, type ListResult } from "@suriyaprakashm14/erp-label-studio/core";
+import { LabelStudioError, TemplateConflictError, parseTemplate, type TemplateStorage, type StoredTemplate, type ListResult } from "@pythonprakash/erp-label-studio/core";
 
 async function json<T>(res: Response): Promise<T> {
   return (await res.json()) as T;

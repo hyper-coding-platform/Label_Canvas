@@ -14,16 +14,16 @@ Node.js 20.19 or later.
 **A. From npm (recommended):**
 
 ```bash
-npm install @suriyaprakashm14/erp-label-studio
+npm install @pythonprakash/erp-label-studio
 ```
 
 **B. Offline, or a build that is not on npm.** Get
-`suriyaprakashm14-erp-label-studio-0.1.0.tgz` (built with `npm run pack:local`, or wherever it was shared), then:
+`pythonprakash-erp-label-studio-0.1.0.tgz` (built with `npm run pack:local`, or wherever it was shared), then:
 
 ```bash
 mkdir vendor
 # move the downloaded .tgz into vendor/
-npm install ./vendor/suriyaprakashm14-erp-label-studio-0.1.0.tgz
+npm install ./vendor/pythonprakash-erp-label-studio-0.1.0.tgz
 ```
 
 Commit `vendor/` and `package-lock.json`, so your teammates and CI get the same version.
@@ -36,7 +36,7 @@ Commit `vendor/` and `package-lock.json`, so your teammates and CI get the same 
 At the top of `app/layout.tsx`:
 
 ```tsx
-import "@suriyaprakashm14/erp-label-studio/styles.css";
+import "@pythonprakash/erp-label-studio/styles.css";
 ```
 
 The styles only apply inside the label editor. Your own layout, fonts and theme are not
@@ -49,7 +49,7 @@ Create **`app/labels/label-designer.tsx`**:
 ```tsx
 "use client";
 import { useState } from "react";
-import { LabelEditor, LabelRenderer, getPresetTemplate, type LabelTemplate } from "@suriyaprakashm14/erp-label-studio";
+import { LabelEditor, LabelRenderer, getPresetTemplate, type LabelTemplate } from "@pythonprakash/erp-label-studio";
 
 const sample = { store: { name: "My Store" }, product: { name: "Cotton Kurta", barcode: "260042130115" }, pricing: { mrp: 1299 } };
 
@@ -90,8 +90,8 @@ export default function LabelsPage() {
 Optional: render labels as SVG on the server. Create **`app/api/label-svg/route.ts`**:
 
 ```ts
-import { renderLabel, renderNodeToSvgString } from "@suriyaprakashm14/erp-label-studio/core";
-import { getPresetTemplate } from "@suriyaprakashm14/erp-label-studio/presets";
+import { renderLabel, renderNodeToSvgString } from "@pythonprakash/erp-label-studio/core";
+import { getPresetTemplate } from "@pythonprakash/erp-label-studio/presets";
 
 export function GET() {
   const template = getPresetTemplate("textile-hang-tag")!;
@@ -105,7 +105,7 @@ export function GET() {
 
 * Editor and preview components go in files that start with `"use client"`.
 * Server code (API routes, server actions) imports only from
-  `@suriyaprakashm14/erp-label-studio/core`.
+  `@pythonprakash/erp-label-studio/core`.
 
 ## Step 4: Test it
 
@@ -154,7 +154,7 @@ npm start            # then repeat the checklist on http://localhost:3000/labels
 
 | You see | Fix |
 | --- | --- |
-| `Module not found: @suriyaprakashm14/erp-label-studio` | Install from npm or the `.tgz` (Step 1), not the git URL. Then delete `node_modules` and `.next` and run `npm install` again |
+| `Module not found: @pythonprakash/erp-label-studio` | Install from npm or the `.tgz` (Step 1), not the git URL. Then delete `node_modules` and `.next` and run `npm install` again |
 | Editor has no styling | The Step 2 import is missing from `app/layout.tsx` |
 | "You're importing a component that needs useState…" | The file using `LabelEditor` is missing `"use client"` on its first line |
 | Editor is flat or has zero height | Give its parent a height, as in `<div style={{ height: 640 }}>` |
@@ -178,7 +178,7 @@ npm run test:nextjs
 
 # 2. Build the installable file (bump "version" in package.json first for a new release)
 npm run pack:local
-# → .pack-test/suriyaprakashm14-erp-label-studio-<version>.tgz
+# → .pack-test/pythonprakash-erp-label-studio-<version>.tgz
 ```
 
 3. Push the repository to GitHub.

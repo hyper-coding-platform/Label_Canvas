@@ -14,7 +14,7 @@ import {
   type NumberInputSlotProps,
   type SelectSlotProps,
   type TextInputSlotProps,
-} from "@suriyaprakashm14/erp-label-studio";
+} from "@pythonprakash/erp-label-studio";
 import { PRODUCTS, productSchema, toLabelRecord } from "@/lib/erp-data";
 
 function AntButton({ setElement, ...p }: ButtonSlotProps) {

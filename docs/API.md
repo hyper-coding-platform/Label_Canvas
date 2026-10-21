@@ -1,15 +1,15 @@
 # API Reference
 
-`@suriyaprakashm14/erp-label-studio` v0.1.0. All exports are ES modules with TypeScript declarations.
+`@pythonprakash/erp-label-studio` v0.1.0. All exports are ES modules with TypeScript declarations.
 
 | Entry point | Use it for | React needed | Client boundary |
 | --- | --- | --- | --- |
-| `@suriyaprakashm14/erp-label-studio/core` | Validation, rendering to SVG, bulk generation, printing, storage, headless store | No | No (safe in server code, workers, Node) |
-| `@suriyaprakashm14/erp-label-studio/presets` | Built-in label sizes and industry templates; preset registries | No | No (safe in server code, workers, Node) |
-| `@suriyaprakashm14/erp-label-studio/renderer` | `LabelRenderer` and `BarcodePreview` React components only | Yes | `"use client"` |
-| `@suriyaprakashm14/erp-label-studio/headless` | React hooks to build your own editor UI | Yes | `"use client"` |
-| `@suriyaprakashm14/erp-label-studio` | Everything above (including presets), plus the default editor UI (`LabelEditor`) | Yes | `"use client"` |
-| `@suriyaprakashm14/erp-label-studio/styles.css` | Scoped styles for the editor and previews | n/a | Import once |
+| `@pythonprakash/erp-label-studio/core` | Validation, rendering to SVG, bulk generation, printing, storage, headless store | No | No (safe in server code, workers, Node) |
+| `@pythonprakash/erp-label-studio/presets` | Built-in label sizes and industry templates; preset registries | No | No (safe in server code, workers, Node) |
+| `@pythonprakash/erp-label-studio/renderer` | `LabelRenderer` and `BarcodePreview` React components only | Yes | `"use client"` |
+| `@pythonprakash/erp-label-studio/headless` | React hooks to build your own editor UI | Yes | `"use client"` |
+| `@pythonprakash/erp-label-studio` | Everything above (including presets), plus the default editor UI (`LabelEditor`) | Yes | `"use client"` |
+| `@pythonprakash/erp-label-studio/styles.css` | Scoped styles for the editor and previews | n/a | Import once |
 
 Anything not listed here is internal and may change without notice. The export lists are
 enforced by `tests/unit/public-api.test.ts`.
@@ -157,8 +157,8 @@ or `SheetLayout` (`{ kind: "sheet", unit, page, orientation?, margins, columns, 
 
 The catalog has its own entry so `/core` consumers do not ship it (about 4.6 kB min + brotli; see
 [PERFORMANCE.md](PERFORMANCE.md)). The root entry re-exports it. **Migration from earlier 0.1.0
-builds:** change `import { getPresetTemplate } from "@suriyaprakashm14/erp-label-studio/core"` to
-`from "@suriyaprakashm14/erp-label-studio/presets"`. `cloneTemplate` stays in `/core`.
+builds:** change `import { getPresetTemplate } from "@pythonprakash/erp-label-studio/core"` to
+`from "@pythonprakash/erp-label-studio/presets"`. `cloneTemplate` stays in `/core`.
 
 | Export | Notes |
 | --- | --- |
@@ -213,7 +213,7 @@ See the "Persistence" section of [INTEGRATION.md](INTEGRATION.md).
 | `panBy` | `(viewport, dx, dy) => Viewport`: moves the view by a screen-pixel delta (Hand tool, Space+drag, arrow keys in Hand mode). Never touches the template, history or dirty state. |
 | `LabelRenderer` | Re-exported for convenience. |
 
-## Default editor UI (`@suriyaprakashm14/erp-label-studio`)
+## Default editor UI (`@pythonprakash/erp-label-studio`)
 
 ### `LabelEditor` (alias `BarcodeEditor`)
 

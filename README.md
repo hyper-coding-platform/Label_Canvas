@@ -1,4 +1,4 @@
-# @suriyaprakashm14/erp-label-studio
+# @pythonprakash/erp-label-studio
 
 A label designer, deterministic label renderer and barcode SDK for React and Next.js ERP
 applications. It is built for textile, retail, warehouse, inventory, jewellery and POS
@@ -49,7 +49,7 @@ systems, and makes no assumptions about your data model, backend or UI framework
 ## Install
 
 ```bash
-npm install @suriyaprakashm14/erp-label-studio
+npm install @pythonprakash/erp-label-studio
 ```
 
 To try an unreleased build, install a packed tarball instead (`npm run pack:local`).
@@ -57,14 +57,14 @@ See [docs/USING_IN_OTHER_APPS.md](https://github.com/hyper-coding-platform/Label
 bundler setup, TypeScript settings and a checklist to confirm your app still builds.
 
 ```tsx
-import "@suriyaprakashm14/erp-label-studio/styles.css"; // once, for example in app/layout.tsx
+import "@pythonprakash/erp-label-studio/styles.css"; // once, for example in app/layout.tsx
 ```
 
 ## Editor
 
 ```tsx
 "use client";
-import { LabelEditor, getPresetTemplate, type LabelTemplate, type DataSchema } from "@suriyaprakashm14/erp-label-studio";
+import { LabelEditor, getPresetTemplate, type LabelTemplate, type DataSchema } from "@pythonprakash/erp-label-studio";
 
 const schema: DataSchema = {
   fields: [
@@ -97,14 +97,14 @@ See [docs/CUSTOMIZATION.md](https://github.com/hyper-coding-platform/Label_Canva
 
 ```tsx
 "use client";
-import { LabelRenderer } from "@suriyaprakashm14/erp-label-studio/renderer";
+import { LabelRenderer } from "@pythonprakash/erp-label-studio/renderer";
 <LabelRenderer template={template} data={record} />;   // physical size, e.g. 50mm × 75mm
 ```
 
 On the server, or with no React at all:
 
 ```ts
-import { renderLabel, renderNodeToSvgString } from "@suriyaprakashm14/erp-label-studio/core";
+import { renderLabel, renderNodeToSvgString } from "@pythonprakash/erp-label-studio/core";
 const result = renderLabel(template, record);
 if (result.ok) svg = renderNodeToSvgString(result.root);
 else console.warn(result.issues); // e.g. BARCODE_VALUE_MISSING: no barcode is generated
@@ -113,7 +113,7 @@ else console.warn(result.issues); // e.g. BARCODE_VALUE_MISSING: no barcode is g
 ## Templates and saving
 
 ```ts
-import { parseTemplate, serializeTemplate, validateTemplate } from "@suriyaprakashm14/erp-label-studio/core";
+import { parseTemplate, serializeTemplate, validateTemplate } from "@pythonprakash/erp-label-studio/core";
 const parsed = parseTemplate(untrustedJson);   // size check → migrate → validate
 if (!parsed.ok) showErrors(parsed.issues);
 const json = serializeTemplate(template);      // store this
@@ -127,8 +127,8 @@ See [docs/INTEGRATION.md](https://github.com/hyper-coding-platform/Label_Canvas/
 ## Bulk generation and printing
 
 ```ts
-import { generateLabels, printLabels } from "@suriyaprakashm14/erp-label-studio/core";
-import { getPresetSizes } from "@suriyaprakashm14/erp-label-studio/presets";
+import { generateLabels, printLabels } from "@pythonprakash/erp-label-studio/core";
+import { getPresetSizes } from "@pythonprakash/erp-label-studio/presets";
 
 for await (const label of generateLabels(template, productsAsyncIterable, { signal, onProgress })) {
   if (label.ok) archive(label.svg!); else report(label.index, label.issues);
@@ -179,4 +179,4 @@ document.skipped; // records not printed (invalid or missing data)
 
 ## License
 
-[MIT](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/LICENSE) © 2026 suriyaprakashm14
+[MIT](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/LICENSE) © 2026 pythonprakash

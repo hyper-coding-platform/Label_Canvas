@@ -1,5 +1,5 @@
 /**
- * @suriyaprakashm14/erp-label-studio/headless
+ * @pythonprakash/erp-label-studio/headless
  *
  * React hooks over the framework-independent EditorStore, for hosts that
  * build their own editor UI. No UI components are included.

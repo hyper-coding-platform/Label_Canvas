@@ -46,8 +46,8 @@ bump.
 
 ## Before the first publish (done 2026-10-22)
 
-* [x] Package name `@suriyaprakashm14/erp-label-studio` (npm user scope `suriyaprakashm14`).
-* [x] License: MIT, © 2026 suriyaprakashm14.
+* [x] Package name `@pythonprakash/erp-label-studio` (npm user scope `pythonprakash`).
+* [x] License: MIT, © 2026 pythonprakash.
 * [x] `author`, `repository`, `homepage` and `bugs` in `package.json`; `publishConfig.access: "public"`
   (scoped packages are private by default).
 * [x] README links are absolute GitHub URLs (only `docs/CHANGELOG.md` ships in the tarball).
@@ -57,7 +57,7 @@ bump.
 
 ```bash
 npm login                      # once per machine; npm account with 2FA
-npm whoami                     # must print suriyaprakashm14
+npm whoami                     # must print pythonprakash
 npm publish --dry-run          # shows exactly what would be uploaded
 npm publish                    # runs prepublishOnly (verify), asks for the 2FA code
 git tag v0.1.0 && git push origin v0.1.0

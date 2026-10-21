@@ -40,11 +40,11 @@ are written conservatively so that consumers on TypeScript ≥5.0 can read them.
 
 | Entry | React? | Contents |
 | --- | --- | --- |
-| `@suriyaprakashm14/erp-label-studio/core` | No | Schema types, validation, migrations, data binding, units, geometry, barcode encoders, renderer, batch generation, print layout, presets, storage adapters, headless editor store |
-| `@suriyaprakashm14/erp-label-studio/renderer` | Yes (`"use client"`) | `LabelRenderer`, `BarcodePreview` only |
-| `@suriyaprakashm14/erp-label-studio/headless` | Yes (`"use client"`) | React hooks over the headless editor store, no UI components |
-| `@suriyaprakashm14/erp-label-studio` | Yes (`"use client"`) | Everything: core + renderer + headless + full editor UI |
-| `@suriyaprakashm14/erp-label-studio/styles.css` | — | Scoped editor and preview styles |
+| `@pythonprakash/erp-label-studio/core` | No | Schema types, validation, migrations, data binding, units, geometry, barcode encoders, renderer, batch generation, print layout, presets, storage adapters, headless editor store |
+| `@pythonprakash/erp-label-studio/renderer` | Yes (`"use client"`) | `LabelRenderer`, `BarcodePreview` only |
+| `@pythonprakash/erp-label-studio/headless` | Yes (`"use client"`) | React hooks over the headless editor store, no UI components |
+| `@pythonprakash/erp-label-studio` | Yes (`"use client"`) | Everything: core + renderer + headless + full editor UI |
+| `@pythonprakash/erp-label-studio/styles.css` | — | Scoped editor and preview styles |
 
 Applications that only print labels import `/core` or `/renderer` and never load
 editor code. Server code imports `/core`, which contains no React import and no
@@ -290,7 +290,7 @@ budget). About 4.6 kB of that is the preset catalog, which most server and rende
 never need.
 
 **Decision.** Move `getPresetSizes`, `getPresetTemplates`, `getPresetTemplate` and
-`createPresetRegistry` (and their types) to `@suriyaprakashm14/erp-label-studio/presets`, a React-free
+`createPresetRegistry` (and their types) to `@pythonprakash/erp-label-studio/presets`, a React-free
 entry checked by post-build like `/core`. The root entry re-exports it, so editor users change
 nothing. `cloneTemplate` moved to `core/validation/clone-template.ts` and stays in `/core`
 (storage depends on it). This is a breaking change for `/core` imports of the catalog. It is
