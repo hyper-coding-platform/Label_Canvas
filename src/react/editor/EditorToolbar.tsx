@@ -1,4 +1,5 @@
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import type { EditorTool } from "../../core/editor/editor-store";
 import { createElement } from "../../core/editor/element-factory";
 import { basePixelsPerUnit, clampZoom, fitZoom, type Viewport } from "../../core/geometry/viewport";
 import type { ElementType } from "../../core/schema/types";
@@ -13,11 +14,15 @@ const ELEMENT_LABELS: Record<ElementType, { label: string; add: string; icon: Ic
   image: { label: "Image", add: "Add image", icon: "image" },
   rect: { label: "Rectangle", add: "Add rectangle", icon: "rect" },
   line: { label: "Line", add: "Add line", icon: "line" },
+  shape: { label: "Shape", add: "Add shape", icon: "shape" },
+  drawing: { label: "Drawing", add: "Pencil: draw freehand", icon: "pencil" },
 };
 
 interface ToolDef {
   readonly key: string;
   readonly label: string;
+  /** Tooltip; defaults to `label`. */
+  readonly title?: string;
   readonly icon: IconName;
   readonly onClick: () => void;
   readonly disabled?: boolean;
@@ -64,8 +69,24 @@ export function EditorToolbar({ canvasViewportId, extra }: { readonly canvasView
     store.setViewport({ zoom: nz, panX: cx - (cx - s.viewport.panX) * k, panY: cy - (cy - s.viewport.panY) * k });
   };
 
+  const pencil = settings.tool === "pencil";
   const tools: ToolDef[] = [
-    ...ui.elementTypes.map((t) => ({ key: `add-${t}`, label: ELEMENT_LABELS[t].add, icon: ELEMENT_LABELS[t].icon, onClick: () => add(t), disabled: readOnly, group: "add" })),
+    // Canvas tools. Hand only moves the view, so it stays available in read-only mode.
+    { key: "cursor", label: "Cursor: select and edit", title: "Cursor: select and edit (V)", icon: "cursor", pressed: settings.tool === "select", onClick: () => setTool(store, "select", announce), group: "tool" },
+    { key: "hand", label: "Hand: pan the view", title: "Hand: pan the view (H, or hold Space)", icon: "hand", pressed: settings.tool === "hand", onClick: () => setTool(store, "hand", announce), group: "tool" },
+    ...ui.elementTypes.map((t) =>
+      t === "drawing"
+        ? {
+            key: "pencil",
+            label: ELEMENT_LABELS.drawing.add,
+            icon: ELEMENT_LABELS.drawing.icon,
+            pressed: pencil,
+            onClick: () => setTool(store, pencil ? "select" : "pencil", announce),
+            disabled: readOnly,
+            group: "add",
+          }
+        : { key: `add-${t}`, label: ELEMENT_LABELS[t].add, icon: ELEMENT_LABELS[t].icon, onClick: () => add(t), disabled: readOnly, group: "add" },
+    ),
     { key: "undo", label: "Undo", icon: "undo", onClick: () => store.undo() && announce("Undone"), disabled: readOnly || !canUndo, group: "history" },
     { key: "redo", label: "Redo", icon: "redo", onClick: () => store.redo() && announce("Redone"), disabled: readOnly || !canRedo, group: "history" },
     { key: "duplicate", label: "Duplicate selection", icon: "duplicate", onClick: () => store.dispatch({ type: "duplicateElements", ids: store.getState().selection, offset: dupOffset(store) }), disabled: readOnly || selection.length === 0, group: "edit" },
@@ -98,7 +119,9 @@ export function EditorToolbar({ canvasViewportId, extra }: { readonly canvasView
   const enabled = tools.map((t, i) => (t.disabled ? -1 : i)).filter((i) => i >= 0);
   const current = enabled.includes(active) ? active : (enabled[0] ?? 0);
   const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
-    const pos = enabled.indexOf(current);
+    // Move from the button that has focus (it may have been focused programmatically, not via Tab).
+    const focused = refs.current.indexOf(e.currentTarget as HTMLButtonElement);
+    const pos = enabled.indexOf(focused >= 0 && enabled.includes(focused) ? focused : current);
     let next: number | undefined;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") next = enabled[(pos + 1) % enabled.length];
     else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = enabled[(pos - 1 + enabled.length) % enabled.length];
@@ -125,7 +148,7 @@ export function EditorToolbar({ canvasViewportId, extra }: { readonly canvasView
               }}
               icon={<Icon name={t.icon} />}
               aria-label={t.label}
-              title={t.label}
+              title={t.title ?? t.label}
               onClick={() => {
                 setActive(i);
                 t.onClick();
@@ -148,6 +171,19 @@ export function EditorToolbar({ canvasViewportId, extra }: { readonly canvasView
       {extra}
     </div>
   );
+}
+
+const TOOL_ANNOUNCEMENTS: Record<EditorTool, string> = {
+  select: "Cursor tool",
+  hand: "Hand tool: drag to pan the view, Escape to return to the cursor",
+  pencil: "Pencil tool: drag on the label to draw, Escape to stop",
+};
+
+/** Switch the canvas tool (a view setting: never touches the template or history). */
+export function setTool(store: ReturnType<typeof useEditorContext>["store"], tool: EditorTool, announce: (message: string) => void): void {
+  if (store.getState().settings.tool === tool) return;
+  store.updateSettings({ tool });
+  announce(TOOL_ANNOUNCEMENTS[tool]);
 }
 
 function dupOffset(store: ReturnType<typeof useEditorContext>["store"]) {

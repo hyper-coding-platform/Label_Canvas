@@ -15,7 +15,7 @@ import { LabelStudioError, TemplateConflictError, TemplateValidationError, throw
 import type { LabelTemplate } from "../schema/types";
 import { parseTemplate } from "../validation/parse-template";
 import { validateTemplate, type ValidateOptions } from "../validation/validate-template";
-import { cloneTemplate } from "../presets/registry";
+import { cloneTemplate } from "../validation/clone-template";
 
 export interface StoredTemplate {
   readonly template: LabelTemplate;

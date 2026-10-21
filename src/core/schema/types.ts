@@ -130,6 +130,38 @@ export type FieldCondition =
   | { readonly field: string; readonly op: PresenceOperator }
   | { readonly field: string; readonly op: ComparisonOperator; readonly value: string | number | boolean };
 
+/* ------------------------------------------------------- conditional style */
+
+/**
+ * Appearance overrides applied by a style rule. Keys are generic so one rule
+ * shape works for every element type; each type accepts only the keys that
+ * apply to it (see docs/DATA_BINDING.md#conditional-styles).
+ */
+export interface StyleOverride {
+  /** Text/barcode/QR background; rect/shape fill. */
+  readonly fill?: Color;
+  /** Text colour; barcode/QR bar colour. */
+  readonly color?: Color;
+  /** Text border colour; rect/shape/line/drawing stroke colour. */
+  readonly stroke?: Color;
+  /** Template units. Text border width; rect/shape/line/drawing stroke width. */
+  readonly strokeWidth?: number;
+  /** 0–1, every element type. */
+  readonly opacity?: number;
+  /** Text only. */
+  readonly fontWeight?: "normal" | "bold";
+  /** Text only. */
+  readonly fontStyle?: "normal" | "italic";
+  /** Text only, points. */
+  readonly fontSize?: number;
+}
+
+/** When `when` holds for the record, `set` is merged over the element's appearance. Later rules win. */
+export interface StyleRule {
+  readonly when: Condition;
+  readonly set: StyleOverride;
+}
+
 /* ---------------------------------------------------------------- elements */
 
 export type ElementType = LabelElement["type"];
@@ -149,6 +181,8 @@ export interface ElementBase {
   readonly locked?: boolean;
   /** Element renders only when the condition holds for the record. */
   readonly condition?: Condition;
+  /** Conditional appearance, evaluated per record in order. */
+  readonly styleRules?: readonly StyleRule[];
 }
 
 export interface Border {
@@ -254,7 +288,29 @@ export interface LineElement extends ElementBase {
   readonly dash?: "solid" | "dashed" | "dotted";
 }
 
-export type LabelElement = TextElement | BarcodeElement | QrCodeElement | ImageElement | RectElement | LineElement;
+export type ShapeKind = "ellipse" | "triangle" | "diamond" | "pentagon" | "hexagon" | "octagon" | "star" | "arrow";
+
+/** A predefined outline scaled to fill its box. */
+export interface ShapeElement extends ElementBase {
+  readonly type: "shape";
+  readonly shape: ShapeKind;
+  readonly fill?: Color;
+  readonly stroke?: Color;
+  /** Template units. Default 0 (no stroke). */
+  readonly strokeWidth?: number;
+}
+
+/** A freehand (pencil) stroke. Points are normalized to the box, so resizing scales the drawing. */
+export interface DrawingElement extends ElementBase {
+  readonly type: "drawing";
+  /** Flat `[x0, y0, x1, y1, …]`, each coordinate in [0, 1] of the box (inside the stroke inset). At least 2 points. */
+  readonly points: readonly number[];
+  readonly stroke?: Color;
+  /** Template units. */
+  readonly strokeWidth: number;
+}
+
+export type LabelElement = TextElement | BarcodeElement | QrCodeElement | ImageElement | RectElement | LineElement | ShapeElement | DrawingElement;
 
 /* ------------------------------------------------------------- data schema */
 

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { RESIZE_HANDLES, resizeRect, snapMove, type Guide, type ResizeHandle } from "../../core/editor/interactions";
 import { normalizeRotation, rectsIntersect, rotatedBounds, unionRects, type Point, type Rect } from "../../core/geometry/rect";
-import { roundTo } from "../../core/geometry/units";
-import { pixelsPerUnit, screenToLabel, zoomAt, type Viewport } from "../../core/geometry/viewport";
+import { createDrawingElement } from "../../core/editor/element-factory";
+import { convertLength, roundTo } from "../../core/geometry/units";
+import { panBy, pixelsPerUnit, screenToLabel, zoomAt, type Viewport } from "../../core/geometry/viewport";
 import { renderLabel } from "../../core/render/render-label";
-import type { LabelElement } from "../../core/schema/types";
+import type { LabelElement, LabelTemplate } from "../../core/schema/types";
 import { shallowArrayEqual, useEditorSelector } from "../headless/hooks";
 import { renderNodeToReact } from "../renderer/to-react";
 import { useEditorContext } from "./context";
@@ -13,10 +14,11 @@ import { fitToScreen } from "./EditorToolbar";
 type Drag =
   | { readonly kind: "move"; readonly ids: readonly string[]; readonly dx: number; readonly dy: number; readonly guides: readonly Guide[] }
   | { readonly kind: "resize"; readonly id: string; readonly rect: Rect }
-  | { readonly kind: "marquee"; readonly rect: Rect };
+  | { readonly kind: "marquee"; readonly rect: Rect }
+  | { readonly kind: "draw"; readonly points: readonly Point[] };
 
 interface Gesture {
-  readonly kind: "move" | "resize" | "marquee" | "pan";
+  readonly kind: "move" | "resize" | "marquee" | "pan" | "draw";
   readonly pointerId: number;
   readonly startScreen: Point;
   readonly startLabel: Point;
@@ -43,6 +45,13 @@ function handlePoint(h: ResizeHandle, r: Rect): Point {
 const box = (e: LabelElement): Rect => ({ x: e.x, y: e.y, width: e.width, height: e.height });
 const rotation = (e: LabelElement) => normalizeRotation(e.rotation ?? 0);
 
+/** The pencil reuses the selected drawing's colour and thickness, so restyling one drawing sets the pen for the next. */
+function pencilStyle(template: LabelTemplate, selection: readonly string[]): { stroke: string; strokeWidth: number } {
+  const sel = selection.length === 1 ? template.elements.find((x) => x.id === selection[0]) : undefined;
+  if (sel?.type === "drawing") return { stroke: sel.stroke ?? "#000000", strokeWidth: sel.strokeWidth };
+  return { stroke: "#000000", strokeWidth: convertLength(0.5, "mm", template.canvas.unit) };
+}
+
 export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId: string; readonly describedBy?: string }) {
   const { store, renderOptions, records, recordIndex, readOnly, announce } = useEditorContext();
   const template = useEditorSelector(store, (s) => s.template);
@@ -52,12 +61,16 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
   const idPrefix = `elsc${useId().replace(/[^A-Za-z0-9_-]/g, "")}`;
   const containerRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
+  /** True while a view pan is in progress (drives the grabbing cursor; set once per gesture, not per move). */
+  const [panning, setPanning] = useState(false);
   const gesture = useRef<Gesture | null>(null);
   const pending = useRef<Drag | null>(null);
   const frame = useRef<number | null>(null);
   /** Viewport set by the last automatic fit; auto-refit on resize stops once the user changes it. */
   const autoFit = useRef<Viewport | null>(null);
   const spaceDown = useRef(false);
+  /** Label-space points of the pencil stroke in progress. */
+  const stroke = useRef<Point[]>([]);
 
   const { unit, width: W, height: H } = template.canvas;
   const ppu = pixelsPerUnit(viewport, unit);
@@ -149,8 +162,14 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
     const hitId = target.closest("[data-hit-id]")?.getAttribute("data-hit-id") ?? null;
     const base = { pointerId: e.pointerId, startScreen: screen, startLabel: labelPt, startViewport: s.viewport, started: false, additive: e.shiftKey || e.ctrlKey || e.metaKey };
 
-    if (e.button === 1 || spaceDown.current) {
-      gesture.current = { ...base, kind: "pan", ids: [] };
+    if (e.button === 1 || spaceDown.current || s.settings.tool === "hand") {
+      // Pans move the view only. They start at once (no threshold) so the label never jumps, and never hit-test elements.
+      gesture.current = { ...base, kind: "pan", ids: [], started: true };
+      setPanning(true);
+    } else if (s.settings.tool === "pencil" && !readOnly) {
+      // The pencil draws over elements: no hit testing, no drag threshold.
+      stroke.current = [labelPt];
+      gesture.current = { ...base, kind: "draw", ids: [], started: true };
     } else if (handle && !readOnly && s.selection.length === 1) {
       const elx = s.template.elements.find((x) => x.id === s.selection[0]);
       if (!elx || elx.locked) return;
@@ -198,7 +217,12 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
     const canvasRect = { x: 0, y: 0, width: s.template.canvas.width, height: s.template.canvas.height };
 
     if (g.kind === "pan") {
-      store.setViewport({ ...g.startViewport, panX: g.startViewport.panX + dxs, panY: g.startViewport.panY + dys });
+      store.setViewport(panBy(g.startViewport, dxs, dys));
+    } else if (g.kind === "draw") {
+      // Coalesced events keep fast strokes smooth where the browser batches pointer moves.
+      const events = e.nativeEvent.getCoalescedEvents?.() ?? [];
+      for (const ev of events.length ? events : [e]) stroke.current.push(screenToLabel(local(ev), g.startViewport, u));
+      schedule({ kind: "draw", points: stroke.current });
     } else if (g.kind === "move") {
       const moving = s.template.elements.filter((x) => g.ids.includes(x.id));
       const bounds = unionRects(moving.map((m) => rotatedBounds(box(m), rotation(m))));
@@ -268,10 +292,22 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
     const d = pending.current;
     pending.current = null;
     setDrag(null);
+    setPanning(false);
     if (!g) return;
     const s = store.getState();
     if (!g.started) {
       if (g.kind === "marquee" && !g.additive) store.select([]);
+      return;
+    }
+    if (g.kind === "draw") {
+      const points = stroke.current;
+      stroke.current = [];
+      if (!commit) return;
+      const style = pencilStyle(s.template, s.selection);
+      const el = createDrawingElement(s.template, points, { ...style, tolerance: 0.75 / pixelsPerUnit(g.startViewport, s.template.canvas.unit) });
+      if (!el) return;
+      const r = store.dispatch({ type: "addElements", elements: [el] });
+      announce(r.ok ? "Drawing added" : "Drawing rejected: the result would be invalid");
       return;
     }
     if (!commit || !d) return;
@@ -289,6 +325,15 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
       store.select(hits, g.additive ? "add" : "replace");
     }
   };
+
+  // Switching tools mid-gesture (toolbar, shortcut) cancels the gesture, so no drag, stroke or pan is left half-done.
+  const finishRef = useRef(finish);
+  useLayoutEffect(() => {
+    finishRef.current = finish;
+  });
+  useEffect(() => {
+    if (gesture.current) finishRef.current(false);
+  }, [settings.tool]);
 
   const moving = drag?.kind === "move" ? drag : null;
   const movingSet = useMemo(() => new Set(moving?.ids ?? []), [moving]);
@@ -342,14 +387,17 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
 
   const handleSize = HANDLE_PX / ppu;
   const selectedEls = template.elements.filter((x) => selection.includes(x.id));
-  const single = selectedEls.length === 1 && !selectedEls[0]!.locked && !readOnly ? selectedEls[0]! : null;
+  const pencil = settings.tool === "pencil" && !readOnly;
+  const hand = settings.tool === "hand";
+  const single = selectedEls.length === 1 && !selectedEls[0]!.locked && !readOnly && !pencil && !hand ? selectedEls[0]! : null;
   const gridVisible = settings.showGrid && settings.gridSize * ppu >= 4;
+  const pen = drag?.kind === "draw" ? pencilStyle(template, selection) : null;
 
   return (
     <div
       id={viewportId}
       ref={containerRef}
-      className={`els-canvas${drag ? " els-canvas--dragging" : ""}`}
+      className={`els-canvas${drag ? " els-canvas--dragging" : ""}${pencil ? " els-canvas--pencil" : ""}${hand ? " els-canvas--hand" : ""}${panning ? " els-canvas--panning" : ""}`}
       tabIndex={0}
       role="region"
       aria-label="Label canvas"
@@ -438,6 +486,19 @@ export function EditorCanvas({ viewportId, describedBy }: { readonly viewportId:
             ) : (
               <line key={i} className="els-guide" y1={g.position} y2={g.position} x1={g.from} x2={g.to} vectorEffect="non-scaling-stroke" />
             ),
+          )}
+          {drag?.kind === "draw" && pen && (
+            <polyline
+              className="els-pencil-preview"
+              points={drag.points.map((p) => `${p.x},${p.y}`).join(" ")}
+              stroke={pen.stroke}
+              strokeWidth={pen.strokeWidth}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              pointerEvents="none"
+              data-testid="els-pencil-preview"
+            />
           )}
           {drag?.kind === "marquee" && <rect className="els-marquee" x={drag.rect.x} y={drag.rect.y} width={drag.rect.width} height={drag.rect.height} vectorEffect="non-scaling-stroke" pointerEvents="none" />}
         </svg>

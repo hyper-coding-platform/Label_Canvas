@@ -22,26 +22,44 @@ so CI assertions use generous ceilings and precise numbers come only from the re
 
 | Budget (ACCEPTANCE_CRITERIA.md) | Target | Measured | Status |
 | --- | --- | --- | --- |
-| `/core`, **all** exports, min + brotli | ≤ 35 kB | **36.88 kB** (incl. qrcode-generator) | ⚠️ documented exception (below) |
-| `/core`, render-only import (`renderLabel` + serializer) | ≤ 30 kB | **25.51 kB** | ✅ |
-| `/renderer` (React excluded) | ≤ 40 kB | **26.45 kB** | ✅ |
-| `/headless` (React excluded) | ≤ 45 kB | **30.11 kB** | ✅ |
-| Full editor (React excluded) | ≤ 90 kB | **59.48 kB** | ✅ |
-| `styles.css` | ≤ 6 kB | **2.40 kB** | ✅ |
-| Render a 10-element label (warm) | ≤ 2 ms median | **0.46 ms** median, 0.72 ms p95 | ✅ |
-| 1,000 records → SVG | ≤ 2 s | **379 ms** (2,638 labels/s) | ✅ |
-| 10,000 records, incremental | bounded heap | **3.43 s**; heap 6.32 → peak 6.47 → 6.42 MB | ✅ |
+| `/core`, **all** exports, min + brotli | ≤ 35 kB | **33.78 kB** (incl. qrcode-generator) | ✅ (after the `/presets` split, D-026; CI limit back at 35 kB) |
+| `/core`, render-only import (`renderLabel` + serializer) | ≤ 30 kB | **27.10 kB** | ✅ |
+| `/presets`, all exports (new entry, new budget) | ≤ 25 kB | **23.88 kB** standalone; **+4.63 kB** on top of `/core` all exports | ✅ |
+| `/renderer` (React excluded) | ≤ 40 kB | **28.13 kB** | ✅ |
+| `/headless` (React excluded) | ≤ 45 kB | **32.31 kB** | ✅ |
+| Full editor (React excluded) | ≤ 90 kB | **63.64 kB** | ✅ |
+| `styles.css` | ≤ 6 kB | **2.50 kB** | ✅ |
+| Render a 10-element label (warm) | ≤ 2 ms median | **0.51 ms** median, 0.90 ms p95 (2026-10-22) | ✅ |
+| 1,000 records → SVG | ≤ 2 s | **336 ms** (2,974 labels/s, 2026-10-22) | ✅ |
+| 10,000 records, incremental | bounded heap | **3.45 s**; heap 6.31 → peak 6.47 → 6.40 MB (2026-10-22) | ✅ |
 | Drag frame at 100 elements | ≤ 16 ms main thread per move | **4.6–5.4 ms** | ✅ |
 | Drag frame at 500 elements | ≤ 16 ms | **10.4–11.1 ms** | ✅ |
-| Drag frame at 1,000 elements | ≤ 16 ms | **15.6–16.5 ms** | ⚠️ at the limit (documented exception) |
+| Drag frame at 1,000 elements | ≤ 16 ms | **15.6–17.3 ms** (2026-10-22 runs: 16.34–17.32) | ⚠️ at or just over the limit (documented exception) |
+| Hand-tool pan frame at 100 / 500 / 1,000 elements | ≤ 16 ms main thread per move | **7.3–8.4 / 11.5–12.8 / 18.4–19.8 ms**; script flat at 1.1 ms | ✅ ≤ 500 elements; ⚠️ 1,000 (same exception) |
 | Max elements per template | 1,000 (hard limit) | enforced by validation | ✅ |
 
 Sizes come from `npm run size` (size-limit with esbuild, minified + brotli), measured
-2026-10-20 after Steps H–K. Package footprint: the tarball is about 300 KB, about 1.2 MB
+2026-10-22 after Step O (Hand/Cursor tools, `/presets` entry).
+
+| Entry (min + brotli) | 2026-10-20 (Step M) | 2026-10-21 (after Step N) | 2026-10-22 (after Step O) |
+| --- | --- | --- | --- |
+| `/core` all exports | 36.88 kB | 38.57 kB ❌ | **33.78 kB** |
+| `/core` render-only | 25.51 kB | 27.08 kB | **27.10 kB** |
+| `/presets` all exports | n/a | n/a | **23.88 kB** (4.63 kB incremental) |
+| `/renderer` | 26.45 kB | 28.10 kB | **28.13 kB** |
+| `/headless` | 30.11 kB | 32.22 kB | **32.31 kB** |
+| Full editor | 59.48 kB | 63.12 kB | **63.64 kB** |
+| `styles.css` | 2.40 kB | 2.47 kB | **2.50 kB** |
+
+The `/presets` standalone figure includes the validation and barcode code that
+`createPresetRegistry().addTemplate` needs, which `/core` users already load. The catalog's
+real cost on top of `/core` is 4.63 kB (38.41 kB for `/core` `*` plus all four preset
+functions, measured with a temporary size-limit entry). Raw, uncompressed sizes of the files
+are in `npm pack --dry-run` (for example, `dist/index.js` is 118.6 kB unminified). Package footprint: the tarball is about 300 KB, about 1.2 MB
 unpacked, mostly source maps (re-measured by `npm run test:pack`). The only production
 dependency is qrcode-generator.
 
-### Exception: `/core` "import everything" size
+### Resolved exception: `/core` "import everything" size
 
 * **Measured:** 36.88 kB min + brotli when an app imports every `/core` export, against a 35 kB
   budget estimated in Phase 0.
@@ -56,8 +74,13 @@ dependency is qrcode-generator.
   **25.51 kB**.
 * **Mitigation:** real applications import subsets and tree-shake; every subset budget
   passes. CI enforces 37 kB for this entry so that further growth fails.
-* **Disposition:** awaiting owner approval. The alternative is to move presets to a separate
-  `/presets` entry (a breaking change to the `/core` export list).
+* **2026-10-21 (Step N):** conditional styles, the `shape` and `drawing` types and their
+  validation take this entry to **38.57 kB**, so `npm run size` now fails its 37 kB ceiling.
+  The ceiling was deliberately **not** raised: the owner must approve a new ceiling or the
+  split below.
+* **2026-10-22 (Step O), resolved:** the preset catalog moved to the `/presets` entry (D-026).
+  `/core` all exports is now **33.78 kB**, under the original 35 kB budget, so the CI limit
+  was tightened from the 37 kB exception ceiling back to **35 kB**. No budget was raised.
 
 ## Core engine (Node, `npm run bench`)
 
@@ -116,6 +139,14 @@ At 1,000 elements, drag moves cost 15.6–16.5 ms on the reference machine, at t
 SVG. **The supported interaction target is ≤ 500 elements.** Templates of 501–1,000 elements
 are accepted and work, with about 60 fps on typical current hardware and possible frame
 drops on older machines. Real labels rarely exceed 50 elements.
+
+Hand-tool panning (2026-10-22, `npm run bench:editor`, 60 moves per run, two runs after a
+first measurement): script is a constant 1.1 ms per move at every size, because the label tree
+is memoized on zoom, not pan, and only the stage transform, overlays and rulers update. Main
+thread per move: 7.3–8.4 ms (100), 11.5–12.8 ms (500) and 18.4–19.8 ms (1,000). The
+1,000-element cost is browser rendering, as with dragging. Promoting the stage to its own
+compositor layer (`will-change: transform`) was measured at 18.4–18.7 ms, within noise, so
+it was not adopted.
 
 A committed edit (move, nudge, property change) re-renders the whole label: about 105 ms at
 1,000 elements and about 20 ms at 100. That cost is paid once per user action. The follow-up

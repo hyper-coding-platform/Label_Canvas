@@ -93,9 +93,24 @@ result) in the "Verification log" at the bottom.
 ## Step M — Final report
 - [x] M1 Final engineering report delivered (2026-10-20).
 
+## Step N — Design flexibility (conditional styles, shapes, pencil)
+- [x] N1 `styleRules` (condition → appearance overrides) in schema, validation, renderer, unit conversion, field paths (D-023).
+- [x] N2 `shape` and `drawing` element types; `createDrawingElement` (D-024).
+- [x] N3 Editor: Conditional style section, Add shape, Pencil tool (Escape exits), shape/drawing properties.
+- [x] N4 Docs (TEMPLATE_FORMAT, DATA_BINDING, API, CHANGELOG, DECISIONS) and tests (unit, RTL, browser).
+  *Exit: all mandatory commands pass; `npm run size` fails only the core all-exports ceiling (open defect, awaiting owner).*
+
+## Step O — Hand/Cursor tools and preset entry (final pre-release update)
+- [x] O1 `settings.tool = "hand"`: toolbar Cursor/Hand toggles, V/H/Escape, arrow-key pan, pan via existing viewport (`panBy`), cancel on tool change (D-025).
+- [x] O2 `/presets` entry; `cloneTemplate` → `core/validation/clone-template.ts`; consumers, docs and pack probe migrated (D-026).
+- [x] O3 Tests: unit (pan math, view-only store changes), RTL (6), Playwright (cursor→hand→zoom→edges→resize→save/reload; touch/pen; Space), editor perf pan measurement.
+- [x] O4 Release gate: see verification log 2026-10-22.
+
 ## Open defects / follow-ups
 - Intermittent: in 1 of 6 three-browser Playwright runs (after the IPv4 fix) 2 tests failed ("Target page, context or browser has been closed"; one deep-equality mismatch) — not reproduced in 5 further full runs or in isolation; likely browser overload (3 browsers × 8 workers on 4 cores). CI uses 1 retry; investigate if it recurs on CI.
-- Budget exceptions awaiting owner approval: core "all exports" size (36.88 vs 35 kB); 1,000-element drag at the 16 ms limit.
+- Resolved 2026-10-22: core "all exports" size (38.57 kB after Step N) → 33.78 kB via the `/presets` entry; CI limit tightened to 35 kB.
+- Awaiting owner approval: 1,000-element interaction exception (drag 15.6–17.3 ms, Hand pan 18.4–19.8 ms); the new `/presets` budget (25 kB).
+- Fixed 2026-10-22 (pre-existing latent defect, exposed by the new first toolbar button): toolbar arrow keys moved from the roving tab stop instead of the focused button.
 - Not verified: React 18; CI host run; physical printing/scanning; manual screen-reader pass.
 - Follow-up optimisation: per-element render caching to cut full re-render cost of committed edits on large templates (≈105 ms at 1,000 elements).
 - Owner decisions before publish: package scope (`@your-org`), license (MIT placeholder), repository URLs.
@@ -140,3 +155,20 @@ result) in the "Verification log" at the bottom.
 | 2026-10-20 | L5 | consumer Node: ESM import of `/core` (render, SVG, batch), CJS `require("/core")` on Node 25.9, documented `check-label-sdk.mjs` | all pass |
 | 2026-10-20 | L5 | `npm run test:pack -- --skip-build`; `npx next build --webpack` in examples/nextjs-app | both pass (Turbopack and webpack) |
 | 2026-10-20 | L5 | `npm run lint`, `typecheck`, `test`, `build`, `check:package` (pre-commit) | all exit 0; 422/422 tests |
+| 2026-10-21 | N | `npm run lint` | exit 0 |
+| 2026-10-21 | N | `npm run typecheck` | exit 0 |
+| 2026-10-21 | N | `npm test` | exit 0; 436/436 (new: `tests/unit/style-rules-shapes.test.ts` 11 tests; 3 RTL tests for style rules, shapes, pencil) |
+| 2026-10-21 | N | `npm run build` | exit 0; post-build: core graph React-free, Node import OK |
+| 2026-10-21 | N | `npm run check:package` | exit 0 (publint, attw node16-ESM + bundler green) |
+| 2026-10-21 | N | `npm run test:browser` (Chromium) | exit 0; 31 passed (new: style-rule highlight follows sample record; Add shape + pencil stroke + Escape) |
+| 2026-10-21 | N | `npm run size` | **exit 1**: core all exports 38.57 kB vs 37 kB ceiling (baseline HEAD 36.88 kB, same method); all other budgets pass. Ceiling not raised — see PERFORMANCE.md |
+| 2026-10-22 | O | `npm run lint`, `npm run typecheck` | exit 0, exit 0 |
+| 2026-10-22 | O | `npm test` | exit 0; 448/448 (new: `tests/unit/viewport-tools.test.ts`, 6 RTL Hand/Cursor tests) |
+| 2026-10-22 | O | `npm run build`; `npm run check:package` | exit 0 (post-build: core + presets graph React-free, Node import + preset validation OK); publint All good, attw green node16-ESM + bundler for all entries incl. `/presets` |
+| 2026-10-22 | O | `npm run size` | exit 0: core all 33.78 ≤ 35 kB (limit tightened from 37); render-only 27.10; presets 23.88 ≤ 25 (new); renderer 28.13; headless 32.31; editor 63.64; css 2.50 |
+| 2026-10-22 | O | `npm run test:browser:all` | exit 0; 91 passed, 8 skipped (Chromium-only). Fixed on the way: toolbar roving-focus defect; test-side WebKit SVG-text boundingBox quirk (ruler alignment now read from DOM) |
+| 2026-10-22 | O | `npm run test:nextjs` | exit 0; tarball 41 files / 318,522 B; clean install; exports probe incl. `/presets`; `next build`; 8/8 production tests |
+| 2026-10-22 | O | clean TS consumer from tarball (NodeNext, strict, exactOptionalPropertyTypes, skipLibCheck false) | `tsc` exit 0; Node run of core + presets + headless OK |
+| 2026-10-22 | O | `next build` of examples/nextjs-playground from tarball | exit 0 |
+| 2026-10-22 | O | `npm run bench`; `npm run bench:editor` (×3) | exit 0; see PERFORMANCE.md (pan script 1.1 ms/move flat; 1,000-element pan 18.4–19.8 ms) |
+| 2026-10-22 | O | `npm audit --omit=dev`, `npm audit`, `npm run check:licenses` | 0 vulnerabilities, 0 vulnerabilities, OK |

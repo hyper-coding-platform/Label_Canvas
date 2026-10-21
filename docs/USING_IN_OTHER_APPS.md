@@ -137,7 +137,8 @@ The rules are the same everywhere:
 | `@your-org/erp-label-studio` | Editor + everything below | Client components only |
 | `@your-org/erp-label-studio/renderer` | `LabelRenderer`, `BarcodePreview` (no editor code) | Client components only |
 | `@your-org/erp-label-studio/headless` | Hooks for your own editor UI | Client components only |
-| `@your-org/erp-label-studio/core` | Validate, render SVG, batch, print, presets, storage | Anywhere |
+| `@your-org/erp-label-studio/core` | Validate, render SVG, batch, print, storage | Anywhere |
+| `@your-org/erp-label-studio/presets` | Built-in sizes and industry templates | Anywhere |
 | `@your-org/erp-label-studio/styles.css` | Scoped styles (`.els-root`, `.els-preview`) | Once at the root |
 
 Import only from these paths. Deep imports such as `…/dist/core.js` are blocked by the
@@ -279,7 +280,8 @@ Save as `scripts/check-label-sdk.mjs` in the consuming app and run it with
 
 ```js
 const core = await import("@your-org/erp-label-studio/core");
-const t = core.getPresetTemplate("textile-hang-tag");
+const presets = await import("@your-org/erp-label-studio/presets");
+const t = presets.getPresetTemplate("textile-hang-tag");
 const r = core.renderLabel(t, { store: { name: "S" }, product: { name: "N", barcode: "260042130115" }, pricing: { mrp: 1 } });
 if (!r.ok) throw new Error("render failed: " + JSON.stringify(r.issues));
 console.log("core OK, svg bytes:", core.renderNodeToSvgString(r.root).length);
@@ -328,13 +330,15 @@ against the production server.
 
 Only what you import is bundled (`sideEffects` allows tree-shaking; only the CSS is kept):
 
-| Import | Size (min + brotli, React excluded) |
+| Import | Size (min + brotli, React excluded; measured 2026-10-22) |
 | --- | --- |
-| `/core`, render only | ≈ 25.5 kB |
-| `/renderer` | ≈ 26.4 kB |
-| `/headless` | ≈ 29.8 kB |
-| Root entry with `LabelEditor` | ≈ 47.6 kB |
-| `styles.css` | ≈ 2.2 kB |
+| `/core`, render only | ≈ 27.1 kB |
+| `/core`, everything | ≈ 33.8 kB |
+| `/presets` on top of `/core` | ≈ +4.6 kB |
+| `/renderer` | ≈ 28.1 kB |
+| `/headless` | ≈ 32.3 kB |
+| Root entry with `LabelEditor` | ≈ 63.6 kB |
+| `styles.css` | ≈ 2.5 kB |
 
 The verified Vite app (editor, renderer and `/core` together with React 19) built to 130 kB
 gzip in total. Pages that only preview or print should import `/renderer` and `/core`, so

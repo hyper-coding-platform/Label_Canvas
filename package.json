@@ -24,6 +24,10 @@
       "types": "./dist/headless.d.ts",
       "default": "./dist/headless.js"
     },
+    "./presets": {
+      "types": "./dist/presets.d.ts",
+      "default": "./dist/presets.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
   },

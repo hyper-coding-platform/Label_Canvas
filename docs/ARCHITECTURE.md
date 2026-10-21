@@ -19,12 +19,14 @@ A label design and barcode SDK for React/Next.js ERP applications that is
 │ /headless   useEditorStore, useEditorSelector, useEditorCommands │
 │ /renderer   LabelRenderer, BarcodePreview (React, no editor)     │
 ├───────────────────────────────────────────────────────────────┤
+│ /presets  built-in sizes + industry templates (no React)         │
+├───────────────────────────────────────────────────────────────┤
 │ /core   (no React, no DOM at import time)                       │
 │   schema · validation · migrations · units · geometry           │
-│   binding · conditions · formatting                             │
+│   binding · conditions · style rules · formatting               │
 │   barcode encoders + adapter · render tree · SVG serialiser     │
 │   batch generation · print layout + print document              │
-│   presets · storage adapters · EditorStore (headless state)     │
+│   storage adapters · EditorStore (headless state)               │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -106,6 +108,15 @@ yields results one at a time. Nothing in it accumulates all output in memory.
 * Drag and resize update a transient *preview* (a ref plus requestAnimationFrame)
   and commit a single command on pointer-up. Pointer moves never create history
   entries.
+* Coordinates have four separate layers: template units (saved geometry), zoom
+  (`viewport.zoom` × the unit's CSS px), view translation (`viewport.panX/panY`,
+  screen px) and container-relative screen points from pointer events. The only
+  conversions are `screenToLabel` / `labelToScreen`. `store.viewport` is the single
+  source of truth for zoom and pan, and the stage, overlays and rulers all read it.
+* Canvas tools (`settings.tool`): `select` (Cursor), `hand` and `pencil`. Hand, middle-button
+  and Space+drag gestures pan the view through `setViewport(panBy(...))` without hit-testing
+  elements. They never dispatch commands, so they create no history and no dirty state. Changing
+  the tool cancels any gesture in progress (D-025).
 * Controlled mode: when the `template` prop changes to a value the editor did
   not emit, the store replaces the template, clears history and preserves the
   selection of ids that still exist. This is documented as "external

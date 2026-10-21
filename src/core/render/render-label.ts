@@ -16,18 +16,22 @@ import { resolveLimits, type TemplateLimits } from "../schema/limits";
 import type {
   BarcodeElement,
   DataRecord,
+  DrawingElement,
   ImageElement,
   LabelElement,
   LabelTemplate,
   LineElement,
   QrCodeElement,
   RectElement,
+  ShapeElement,
   TextElement,
 } from "../schema/types";
 import { validateTemplate } from "../validation/validate-template";
 import { layoutLinear, layoutMatrix } from "./barcode-layout";
 import { checkImageSource, type ImagePolicy } from "./image-policy";
 import { node, type RenderNode } from "./nodes";
+import { drawingPath, shapePath } from "./shapes";
+import { applyStyleRules } from "./style-rules";
 import { estimateTextMeasurer, layoutText, type MeasureFont, type TextMeasurer } from "./text-layout";
 
 export interface RenderOptions {
@@ -131,12 +135,13 @@ export function renderLabel(template: LabelTemplate, record?: DataRecord, option
   children.push(node("rect", { x: "0", y: "0", width: n(width), height: n(height), fill: t.canvas.background ?? "#ffffff" }));
 
   const content: RenderNode[] = [];
-  t.elements.forEach((el, index) => {
-    if (el.visible === false || options.excludeElementIds?.has(el.id)) return;
-    if (el.condition && !evaluateCondition(el.condition, record)) return;
+  t.elements.forEach((source, index) => {
+    if (source.visible === false || options.excludeElementIds?.has(source.id)) return;
+    if (source.condition && !evaluateCondition(source.condition, record)) return;
+    const { element: el, opacity } = applyStyleRules(source, record, unit);
     try {
       const rendered = renderElement(ctx, el, index);
-      if (rendered) content.push(wrapElement(el, rendered));
+      if (rendered) content.push(wrapElement(el, rendered, opacity));
     } catch (e) {
       ctx.issues.push(issue("error", "RENDER_FAILED", el, index, isLabelStudioError(e) || e instanceof Error ? e.message : "Element failed to render."));
     }
@@ -163,10 +168,10 @@ function issue(severity: "error" | "warning", code: string, el: LabelElement, in
   return { code, severity, path: `/elements/${index}`, message, elementId: el.id };
 }
 
-function wrapElement(el: LabelElement, inner: RenderNode[]): RenderNode {
+function wrapElement(el: LabelElement, inner: RenderNode[], opacity: number | undefined): RenderNode {
   const rot = normalizeRotation(el.rotation ?? 0);
   const transform = rot === 0 ? undefined : `rotate(${n(rot)} ${n(el.x + el.width / 2)} ${n(el.y + el.height / 2)})`;
-  return node("g", { "data-element-id": el.id, "data-element-type": el.type, transform }, inner);
+  return node("g", { "data-element-id": el.id, "data-element-type": el.type, transform, opacity: opacity === undefined || opacity === 1 ? undefined : n(opacity) }, inner);
 }
 
 function renderElement(ctx: Ctx, el: LabelElement, index: number): RenderNode[] | null {
@@ -183,6 +188,10 @@ function renderElement(ctx: Ctx, el: LabelElement, index: number): RenderNode[] 
       return renderRect(el);
     case "line":
       return renderLine(el);
+    case "shape":
+      return renderShape(el);
+    case "drawing":
+      return renderDrawing(el);
   }
 }
 
@@ -427,6 +436,32 @@ function renderLine(el: LineElement): RenderNode[] {
       "stroke-width": n(sw),
       "stroke-dasharray": dash,
       "stroke-linecap": el.dash === "dotted" ? "round" : "butt",
+    }),
+  ];
+}
+
+function renderShape(el: ShapeElement): RenderNode[] {
+  const sw = el.strokeWidth ?? 0;
+  return [
+    node("path", {
+      d: shapePath(el.shape, box(el), sw),
+      fill: el.fill ?? "none",
+      stroke: sw > 0 ? (el.stroke ?? "#000000") : undefined,
+      "stroke-width": sw > 0 ? n(sw) : undefined,
+      "stroke-linejoin": sw > 0 ? "round" : undefined,
+    }),
+  ];
+}
+
+function renderDrawing(el: DrawingElement): RenderNode[] {
+  return [
+    node("path", {
+      d: drawingPath(el.points, box(el), el.strokeWidth),
+      fill: "none",
+      stroke: el.stroke ?? "#000000",
+      "stroke-width": n(el.strokeWidth),
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
     }),
   ];
 }

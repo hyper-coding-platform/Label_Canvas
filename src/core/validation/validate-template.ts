@@ -13,9 +13,11 @@ import type { Issue } from "../errors";
 import { normalizeRotation, rectsIntersect, rectContains, rotatedBounds } from "../geometry/rect";
 import { LENGTH_UNITS, toMm } from "../geometry/units";
 import { checkImageSource, type ImagePolicy } from "../render/image-policy";
+import { SHAPE_KINDS } from "../render/shapes";
+import { STYLE_OVERRIDE_KEYS } from "../render/style-rules";
 import { DEFAULT_FONT_REGISTRY, FONT_ID_PATTERN, type FontRegistry } from "../schema/fonts";
 import { resolveLimits, type TemplateLimits } from "../schema/limits";
-import { CURRENT_SCHEMA_VERSION, type LabelTemplate, type LengthUnit } from "../schema/types";
+import { CURRENT_SCHEMA_VERSION, type ElementType, type LabelTemplate, type LengthUnit } from "../schema/types";
 import {
   DecodeContext,
   checkKeys,
@@ -49,7 +51,7 @@ export const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
 
 const TEMPLATE_KEYS = new Set(["schemaVersion", "id", "name", "description", "category", "tags", "canvas", "elements"]);
 const CANVAS_KEYS = new Set(["width", "height", "unit", "background", "cornerRadius", "printerDpi"]);
-const BASE_KEYS = ["id", "type", "name", "x", "y", "width", "height", "rotation", "visible", "locked", "condition"];
+const BASE_KEYS = ["id", "type", "name", "x", "y", "width", "height", "rotation", "visible", "locked", "condition", "styleRules"];
 const ELEMENT_KEYS: Record<string, ReadonlySet<string>> = {
   text: new Set([...BASE_KEYS, "content", "style", "background", "border", "padding"]),
   barcode: new Set([...BASE_KEYS, "format", "value", "showText", "textSize", "color", "background", "moduleWidth", "bearer", "whenMissing"]),
@@ -57,7 +59,10 @@ const ELEMENT_KEYS: Record<string, ReadonlySet<string>> = {
   image: new Set([...BASE_KEYS, "src", "fit", "alt"]),
   rect: new Set([...BASE_KEYS, "fill", "stroke", "strokeWidth", "cornerRadius"]),
   line: new Set([...BASE_KEYS, "stroke", "strokeWidth", "dash"]),
+  shape: new Set([...BASE_KEYS, "shape", "fill", "stroke", "strokeWidth"]),
+  drawing: new Set([...BASE_KEYS, "points", "stroke", "strokeWidth"]),
 };
+const STYLE_RULE_KEYS = new Set(["when", "set"]);
 export const ELEMENT_TYPES = Object.freeze(Object.keys(ELEMENT_KEYS)) as readonly string[];
 const STYLE_KEYS = new Set(["fontFamily", "fontSize", "fontWeight", "fontStyle", "color", "align", "verticalAlign", "lineHeight", "letterSpacing", "overflow", "maxLines", "minFontSize"]);
 const BORDER_KEYS = new Set(["width", "color", "radius"]);
@@ -290,15 +295,28 @@ function decodeElement(env: Env, value: unknown, path: string, canvas: CanvasInf
     case "rect":
       optional(env, value, out, "fill", path, (v, p) => decodeColor(ctx, v, p, id));
       optional(env, value, out, "stroke", path, (v, p) => decodeColor(ctx, v, p, id));
-      optional(env, value, out, "strokeWidth", path, (v, p) => decodeNumber(ctx, v, p, { min: 0, max: minSide / 2 }, id));
+      optional(env, value, out, "strokeWidth", path, (v, p) => decodeNumber(ctx, v, p, strokeRules(type, width, height), id));
       optional(env, value, out, "cornerRadius", path, (v, p) => decodeNumber(ctx, v, p, { min: 0, max: minSide / 2 }, id));
       break;
     case "line":
-      out.strokeWidth = required(env, value, "strokeWidth", path, (v, p) => decodeNumber(ctx, v, p, { exclusiveMin: 0, max: height ?? Infinity }, id), id);
+      out.strokeWidth = required(env, value, "strokeWidth", path, (v, p) => decodeNumber(ctx, v, p, strokeRules(type, width, height), id), id);
       optional(env, value, out, "stroke", path, (v, p) => decodeColor(ctx, v, p, id));
       optional(env, value, out, "dash", path, (v, p) => decodeEnum(ctx, v, p, ["solid", "dashed", "dotted"], id));
       break;
+    case "shape":
+      out.shape = required(env, value, "shape", path, (v, p) => decodeEnum(ctx, v, p, SHAPE_KINDS, id), id);
+      optional(env, value, out, "fill", path, (v, p) => decodeColor(ctx, v, p, id));
+      optional(env, value, out, "stroke", path, (v, p) => decodeColor(ctx, v, p, id));
+      optional(env, value, out, "strokeWidth", path, (v, p) => decodeNumber(ctx, v, p, strokeRules(type, width, height), id));
+      break;
+    case "drawing":
+      out.points = required(env, value, "points", path, (v, p) => decodeDrawingPoints(env, v, p, id), id);
+      out.strokeWidth = required(env, value, "strokeWidth", path, (v, p) => decodeNumber(ctx, v, p, strokeRules(type, width, height), id), id);
+      optional(env, value, out, "stroke", path, (v, p) => decodeColor(ctx, v, p, id));
+      break;
   }
+  // Decoded after the type-specific properties: override limits depend on the element's size.
+  optional(env, value, out, "styleRules", path, (v, p) => decodeStyleRules(env, v, p, type as ElementType, width, height, id));
 
   if (canvas && x !== undefined && y !== undefined && width !== undefined && height !== undefined) {
     checkBounds(env, { x, y, width, height }, normalizeRotation((out.rotation as number | undefined) ?? 0), canvas, path, id);
@@ -317,6 +335,70 @@ function checkBounds(env: Env, rect: { x: number; y: number; width: number; heig
   } else if (!rectContains(canvasRect, bounds, 1e-6)) {
     env.ctx.warn(path, "ELEMENT_EXCEEDS_CANVAS", "Element extends beyond the canvas edge and will be clipped.", id);
   }
+}
+
+/** Stroke width rules shared by element properties and style overrides. Text applies them to the border. */
+function strokeRules(type: string, width: number | undefined, height: number | undefined): Parameters<typeof decodeNumber>[3] {
+  const minSide = Math.min(width ?? Infinity, height ?? Infinity);
+  if (type === "line") return { exclusiveMin: 0, max: height ?? Infinity };
+  if (type === "drawing") return { exclusiveMin: 0, max: minSide };
+  return { min: 0, max: minSide / 2 };
+}
+
+function decodeDrawingPoints(env: Env, value: unknown, path: string, id: string | undefined): number[] | undefined {
+  const { ctx, limits } = env;
+  if (!Array.isArray(value) || value.length < 4 || value.length % 2 !== 0 || value.length > limits.maxDrawingPoints * 2) {
+    ctx.error(path, "DRAWING_POINTS_INVALID", `points must be a flat array of 2–${limits.maxDrawingPoints} x/y pairs.`, id);
+    return undefined;
+  }
+  for (let i = 0; i < value.length; i += 1) {
+    const v: unknown = value[i];
+    if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1) {
+      ctx.error(`${path}/${i}`, "DRAWING_POINTS_INVALID", "Drawing coordinates must be numbers between 0 and 1.", id);
+      return undefined;
+    }
+  }
+  return (value as number[]).map((v) => (v === 0 ? 0 : v));
+}
+
+function decodeStyleRules(env: Env, value: unknown, path: string, type: ElementType, width: number | undefined, height: number | undefined, id: string | undefined): Obj[] | undefined {
+  const { ctx, limits } = env;
+  if (!Array.isArray(value)) {
+    ctx.error(path, "TYPE_MISMATCH", "styleRules must be an array.", id);
+    return undefined;
+  }
+  if (value.length > limits.maxStyleRules) {
+    ctx.error(path, "TOO_MANY_STYLE_RULES", `At most ${limits.maxStyleRules} style rules are allowed per element.`, id);
+    return undefined;
+  }
+  const allowed = new Set<string>(STYLE_OVERRIDE_KEYS[type]);
+  const rules = value.map((rule, i): Obj | undefined => {
+    const p = `${path}/${i}`;
+    if (!isPlainObject(rule)) {
+      ctx.error(p, "TYPE_MISMATCH", "A style rule must be an object with \"when\" and \"set\".", id);
+      return undefined;
+    }
+    checkKeys(ctx, rule, STYLE_RULE_KEYS, p, id);
+    const when = required(env, rule, "when", p, (v, pp) => decodeCondition(env, v, pp, 1, { count: 0 }, id), id);
+    const set = required(env, rule, "set", p, (v, pp) => {
+      if (!isPlainObject(v)) {
+        ctx.error(pp, "TYPE_MISMATCH", "set must be an object.", id);
+        return undefined;
+      }
+      // Keys that do not apply to this element type are errors (e.g. fontSize on a rectangle).
+      checkKeys(ctx, v, allowed, pp, id);
+      const o: Obj = {};
+      for (const key of ["fill", "color", "stroke"]) optional(env, v, o, key, pp, (c, cp) => decodeColor(ctx, c, cp, id));
+      optional(env, v, o, "strokeWidth", pp, (w, wp) => decodeNumber(ctx, w, wp, strokeRules(type, width, height), id));
+      optional(env, v, o, "opacity", pp, (w, wp) => decodeNumber(ctx, w, wp, { min: 0, max: 1 }, id));
+      optional(env, v, o, "fontWeight", pp, (w, wp) => decodeEnum(ctx, w, wp, ["normal", "bold"], id));
+      optional(env, v, o, "fontStyle", pp, (w, wp) => decodeEnum(ctx, w, wp, ["normal", "italic"], id));
+      optional(env, v, o, "fontSize", pp, (w, wp) => decodeNumber(ctx, w, wp, { min: 0.5, max: limits.maxFontSizePt }, id));
+      return o;
+    }, id);
+    return when === undefined || set === undefined ? undefined : { when, set };
+  });
+  return rules.every((r) => r !== undefined) ? (rules as Obj[]) : undefined;
 }
 
 function decodeText(env: Env, value: Obj, out: Obj, path: string, minSide: number, id: string | undefined) {

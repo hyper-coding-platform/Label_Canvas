@@ -18,7 +18,7 @@ export interface RenderNode {
   readonly text?: string;
 }
 
-const PRESENTATION = ["fill", "fill-opacity", "stroke", "stroke-width", "stroke-dasharray", "stroke-linecap", "opacity", "transform", "clip-path", "shape-rendering"] as const;
+const PRESENTATION = ["fill", "fill-opacity", "stroke", "stroke-width", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "opacity", "transform", "clip-path", "shape-rendering"] as const;
 const DATA = ["data-element-id", "data-element-type", "data-placeholder"] as const;
 
 export const ATTRIBUTE_ALLOWLIST: Readonly<Record<SvgTag, ReadonlySet<string>>> = {

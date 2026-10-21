@@ -9,7 +9,7 @@ export interface DataValidationOptions extends Omit<RenderOptions, "mode" | "idP
   readonly schema?: DataSchema | undefined;
 }
 
-/** Every binding path a template references (value sources and conditions), deduplicated. */
+/** Every binding path a template references (value sources, conditions and style rules), deduplicated. */
 export function getTemplateFieldPaths(template: LabelTemplate): string[] {
   const out = new Set<string>();
   const add = (s: ValueSource | undefined) => {
@@ -19,6 +19,7 @@ export function getTemplateFieldPaths(template: LabelTemplate): string[] {
     if (el.type === "text") add(el.content);
     else if (el.type === "barcode" || el.type === "qrcode") add(el.value);
     if (el.condition) conditionPaths(el.condition, out);
+    for (const rule of el.styleRules ?? []) conditionPaths(rule.when, out);
   }
   return [...out];
 }

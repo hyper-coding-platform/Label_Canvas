@@ -6,7 +6,7 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LabelEditor, darkTheme, type ButtonSlotProps, type LabelTemplate } from "../../src/entries/index";
 import { LabelRenderer, BarcodePreview } from "../../src/entries/renderer";
-import { useEditorStore, useEditorCommands, useEditorSelector } from "../../src/entries/headless";
+import { createEditorStore, useEditorStore, useEditorCommands, useEditorSelector } from "../../src/entries/headless";
 import { baseTemplate, barcodeEl, textEl, textileRecord, textileTemplate } from "../fixtures/templates";
 
 afterEach(cleanup);
@@ -309,5 +309,171 @@ describe("storage integration (useTemplateStorage + LabelEditor)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByTestId("els-save-status").textContent).toMatch(/Save failed: .*modified elsewhere/));
     expect((await storage.get("textile-hang-tag"))!.template.name).toBe("Changed elsewhere");
+  });
+});
+
+describe("conditional style, shapes and pencil", () => {
+  it("adds, edits and removes a highlight style rule from the properties panel", async () => {
+    render(<Controlled initial={baseTemplate([textEl({ content: { kind: "static", value: "M" } })])} />);
+    await userEvent.click(screen.getByTestId("els-layer-t1"));
+    await userEvent.click(screen.getByTestId("els-add-style-rule"));
+    expect(current().elements[0]!.styleRules).toEqual([{ when: { field: "product.name", op: "eq", value: "" }, set: { fill: "#000000", color: "#ffffff" } }]);
+    const rule = screen.getByTestId("els-style-rule-0");
+    await userEvent.type(within(rule).getByLabelText("Value"), "M{Enter}");
+    expect(current().elements[0]!.styleRules![0]!.when).toEqual({ field: "product.name", op: "eq", value: "M" });
+    await userEvent.selectOptions(within(rule).getByLabelText("Weight"), "bold");
+    expect(current().elements[0]!.styleRules![0]!.set).toEqual({ fill: "#000000", color: "#ffffff", fontWeight: "bold" });
+    await userEvent.click(within(rule).getByRole("button", { name: "Remove rule" }));
+    expect(current().elements[0]!.styleRules).toBeUndefined();
+  });
+
+  it("adds a shape and switches its outline", async () => {
+    render(<Controlled initial={baseTemplate([])} />);
+    await userEvent.click(screen.getByRole("button", { name: "Add shape" }));
+    expect(current().elements[0]).toMatchObject({ type: "shape", shape: "ellipse" });
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Shape" }), "star");
+    expect(current().elements[0]).toMatchObject({ type: "shape", shape: "star" });
+  });
+
+  it("draws a freehand stroke with the pencil and leaves pencil mode with Escape", async () => {
+    render(<Controlled initial={baseTemplate([])} />);
+    const pencil = screen.getByRole("button", { name: "Pencil: draw freehand" });
+    await userEvent.click(pencil);
+    expect(pencil.getAttribute("aria-pressed")).toBe("true");
+    const canvas = screen.getByTestId("els-canvas");
+    fireEvent.pointerDown(canvas, { pointerId: 1, button: 0, clientX: 20, clientY: 20 });
+    for (const [x, y] of [[40, 35], [60, 50], [80, 30]] as const) fireEvent.pointerMove(canvas, { pointerId: 1, clientX: x, clientY: y });
+    fireEvent.pointerUp(canvas, { pointerId: 1 });
+    const els = current().elements;
+    expect(els).toHaveLength(1);
+    expect(els[0]).toMatchObject({ type: "drawing" });
+    // The new drawing is selected; drawing over it starts another stroke instead of moving it.
+    fireEvent.pointerDown(canvas, { pointerId: 2, button: 0, clientX: 30, clientY: 30 });
+    fireEvent.pointerMove(canvas, { pointerId: 2, clientX: 70, clientY: 60 });
+    fireEvent.pointerUp(canvas, { pointerId: 2 });
+    expect(current().elements.map((e) => e.type)).toEqual(["drawing", "drawing"]);
+    fireEvent.keyDown(canvas, { key: "Escape" });
+    expect(pencil.getAttribute("aria-pressed")).toBe("false");
+  });
+});
+
+describe("Hand and Cursor tools", () => {
+  const setup = (extra: { readOnly?: boolean } = {}) => {
+    const store = createEditorStore(baseTemplate([textEl({ id: "t1", x: 5, y: 5, width: 20, height: 6, content: { kind: "static", value: "Hi" } })]));
+    const onTemplateChange = vi.fn();
+    const unsubscribe = store.subscribe(() => {
+      if (store.getState().dirty) onTemplateChange();
+    });
+    render(<LabelEditor store={store} {...(extra.readOnly ? { readOnly: true } : {})} />);
+    const canvas = screen.getByTestId("els-canvas");
+    const hit = () => canvas.querySelector('[data-hit-id="t1"]')!;
+    return { store, canvas, hit, onTemplateChange, unsubscribe, template: store.getState().template };
+  };
+  const cursorBtn = () => screen.getByRole("button", { name: "Cursor: select and edit" });
+  const handBtn = () => screen.getByRole("button", { name: "Hand: pan the view" });
+
+  it("exposes both tools with accessible names, tooltips and pressed state", async () => {
+    setup();
+    expect(cursorBtn().getAttribute("aria-pressed")).toBe("true");
+    expect(handBtn().getAttribute("aria-pressed")).toBe("false");
+    expect(handBtn().getAttribute("title")).toBe("Hand: pan the view (H, or hold Space)");
+    await userEvent.click(handBtn());
+    expect(handBtn().getAttribute("aria-pressed")).toBe("true");
+    expect(cursorBtn().getAttribute("aria-pressed")).toBe("false");
+    expect(screen.getByTestId("els-canvas").className).toContain("els-canvas--hand");
+    await userEvent.click(cursorBtn());
+    expect(cursorBtn().getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("Hand drag over an element pans the view without selecting, moving or dirtying anything", async () => {
+    const { store, canvas, hit, onTemplateChange, template } = setup();
+    await userEvent.click(handBtn());
+    const before = store.getState().viewport;
+    fireEvent.pointerDown(hit(), { pointerId: 1, button: 0, clientX: 30, clientY: 30 });
+    expect(canvas.className).toContain("els-canvas--panning");
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 90, clientY: 10 });
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 130, clientY: -40 });
+    // Released far from where it started (and outside the canvas): the pan ends cleanly.
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 130, clientY: -40 });
+    const s = store.getState();
+    expect(s.viewport).toEqual({ zoom: before.zoom, panX: before.panX + 100, panY: before.panY - 70 });
+    expect(s.selection).toEqual([]);
+    expect(s.template).toBe(template);
+    expect(s.canUndo).toBe(false);
+    expect(s.dirty).toBe(false);
+    expect(onTemplateChange).not.toHaveBeenCalled();
+    expect(canvas.className).not.toContain("els-canvas--panning");
+    // No selection handles are shown in Hand mode, so resizing cannot start.
+    expect(screen.queryByTestId("els-handle-se")).toBeNull();
+  });
+
+  it("Hand pans at other zoom levels in both directions; Cursor still selects and moves", async () => {
+    const { store, canvas, hit } = setup();
+    store.setViewport({ zoom: 6, panX: -200, panY: -150 });
+    await userEvent.click(handBtn());
+    fireEvent.pointerDown(canvas, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 40, clientY: 160 });
+    fireEvent.pointerUp(canvas, { pointerId: 1 });
+    expect(store.getState().viewport).toEqual({ zoom: 6, panX: -260, panY: -90 });
+    await userEvent.click(cursorBtn());
+    fireEvent.pointerDown(hit(), { pointerId: 2, button: 0, clientX: 10, clientY: 10 });
+    expect(store.getState().selection).toEqual(["t1"]);
+    fireEvent.pointerMove(canvas, { pointerId: 2, clientX: 10 + 22.68, clientY: 10 });
+    fireEvent.pointerUp(canvas, { pointerId: 2 });
+    const el = store.getState().template.elements[0]!;
+    expect(el.x).toBeGreaterThan(5);
+    expect(store.getState().viewport).toEqual({ zoom: 6, panX: -260, panY: -90 });
+    expect(store.getState().canUndo).toBe(true);
+  });
+
+  it("switching tools or losing pointer capture mid-gesture never leaves the canvas stuck", async () => {
+    const { store, canvas, hit } = setup();
+    await userEvent.click(handBtn());
+    fireEvent.pointerDown(canvas, { pointerId: 1, button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 50, clientY: 0 });
+    fireEvent.keyDown(canvas, { key: "v" });
+    expect(cursorBtn().getAttribute("aria-pressed")).toBe("true");
+    expect(canvas.className).not.toContain("els-canvas--panning");
+    const panned = store.getState().viewport;
+    // Further moves of the abandoned pointer do nothing.
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 300, clientY: 300 });
+    fireEvent.pointerUp(canvas, { pointerId: 1 });
+    expect(store.getState().viewport).toEqual(panned);
+    // Lost capture ends a pan too, and the Cursor tool works right after.
+    await userEvent.click(handBtn());
+    fireEvent.pointerDown(canvas, { pointerId: 3, button: 0, clientX: 0, clientY: 0 });
+    fireEvent.lostPointerCapture(canvas, { pointerId: 3 });
+    expect(canvas.className).not.toContain("els-canvas--panning");
+    await userEvent.click(cursorBtn());
+    fireEvent.pointerDown(hit(), { pointerId: 4, button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerUp(canvas, { pointerId: 4 });
+    expect(store.getState().selection).toEqual(["t1"]);
+    expect(store.getState().template.elements[0]!.x).toBe(5);
+  });
+
+  it("keyboard: H/V switch tools, arrows pan in Hand mode, Escape returns to Cursor", async () => {
+    const { store, canvas } = setup();
+    canvas.focus();
+    fireEvent.keyDown(canvas, { key: "h" });
+    expect(store.getState().settings.tool).toBe("hand");
+    const v0 = store.getState().viewport;
+    fireEvent.keyDown(canvas, { key: "ArrowRight" });
+    fireEvent.keyDown(canvas, { key: "ArrowDown", shiftKey: true });
+    expect(store.getState().viewport).toEqual({ ...v0, panX: v0.panX - 50, panY: v0.panY - 200 });
+    expect(store.getState().canUndo).toBe(false);
+    fireEvent.keyDown(canvas, { key: "Escape" });
+    expect(store.getState().settings.tool).toBe("select");
+    // Typing "h" in a text field is text, not a shortcut.
+    await userEvent.click(screen.getByTestId("els-layer-t1"));
+    await userEvent.type(screen.getByLabelText("Layer name"), "h");
+    expect(store.getState().settings.tool).toBe("select");
+  });
+
+  it("Hand stays available in read-only mode while editing tools are disabled", async () => {
+    const { store } = setup({ readOnly: true });
+    expect((handBtn() as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole("button", { name: "Add text" }) as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.click(handBtn());
+    expect(store.getState().settings.tool).toBe("hand");
   });
 });

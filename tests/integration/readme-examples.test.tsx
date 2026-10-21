@@ -7,7 +7,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LabelEditor, getPresetTemplate, type DataSchema, type LabelTemplate } from "../../src/entries/index";
 import { LabelRenderer } from "../../src/entries/renderer";
-import { generateLabels, getPresetSizes, parseTemplate, renderLabel, renderNodeToSvgString, serializeTemplate, buildPrintDocument } from "../../src/entries/core";
+import { generateLabels, parseTemplate, renderLabel, renderNodeToSvgString, serializeTemplate, buildPrintDocument } from "../../src/entries/core";
+import { getPresetSizes } from "../../src/entries/presets";
 
 afterEach(cleanup);
 

@@ -14,7 +14,7 @@ export interface EditorUiConfig {
   readonly panelWidth?: string | undefined;
   /** Minimum editor height (CSS). Default `480px`. */
   readonly minHeight?: string | undefined;
-  /** Element types offered in the toolbar. Default: all. */
+  /** Element types offered in the toolbar. Default: all. `drawing` enables the pencil tool. */
   readonly elementTypes?: readonly ElementType[] | undefined;
   /** Show the save button (requires `onSave`). Default true. */
   readonly saveButton?: boolean | undefined;
@@ -38,7 +38,7 @@ export interface ResolvedUiConfig {
   readonly templateSettings: boolean;
 }
 
-export const ALL_ELEMENT_TYPES: readonly ElementType[] = ["text", "barcode", "qrcode", "image", "rect", "line"];
+export const ALL_ELEMENT_TYPES: readonly ElementType[] = ["text", "barcode", "qrcode", "image", "rect", "line", "shape", "drawing"];
 
 export function resolveUiConfig(ui: EditorUiConfig | undefined): ResolvedUiConfig {
   return {

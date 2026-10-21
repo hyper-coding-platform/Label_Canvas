@@ -10,6 +10,8 @@ Every editing operation is possible **without the canvas** (pointer drag is opti
 | Select elements | **Layers** listbox (`role="listbox"`, multi-select): ↑/↓/Home/End move, Shift+↑/↓ extend, Space toggles. The canvas: Ctrl+A selects all |
 | Exact position, size, rotation and properties | **Properties** panel: labelled inputs with units; ↑/↓ step (Shift ×10); Enter commits; Escape reverts |
 | Move the selection | Arrow keys on the canvas (1 grid unit, or 0.1 mm without snapping; Shift ×10) |
+| Switch canvas tool | Toolbar **Cursor** / **Hand** toggle buttons (`aria-pressed`), or V (Cursor) and H (Hand) when focus is not in a text field. Escape returns to the Cursor from any tool |
+| Look around a zoomed label | Hand tool: arrow keys pan the view by 50 px (Shift: 200 px). Hold Space and drag to pan with any tool. Zoom in/out and Fit to screen are toolbar buttons. Panning never changes the template |
 | Reorder, hide, lock | Layer actions group: Bring forward, Send backward, To front, To back, Show/Hide, Lock/Unlock (Alt+↑/↓ in the list also reorders) |
 | Undo, redo, duplicate, delete, save | Ctrl/Cmd+Z, Ctrl+Shift+Z or Ctrl+Y, Ctrl+D, Delete/Backspace, Ctrl+S |
 | Print preview | Toolbar → modal dialog (`role="dialog"`, `aria-modal`): focus moves inside, Tab is contained, Escape closes, focus returns to the toolbar |

@@ -22,6 +22,10 @@ export interface TemplateLimits {
   readonly maxValueLength: number;
   readonly maxConditionDepth: number;
   readonly maxConditionNodes: number;
+  /** Style rules per element. */
+  readonly maxStyleRules: number;
+  /** Points per drawing element. */
+  readonly maxDrawingPoints: number;
   readonly maxPathSegments: number;
   readonly maxImageBytes: number;
   readonly maxFontSizePt: number;
@@ -41,6 +45,8 @@ export const DEFAULT_LIMITS: TemplateLimits = Object.freeze({
   maxValueLength: 4096,
   maxConditionDepth: 4,
   maxConditionNodes: 64,
+  maxStyleRules: 16,
+  maxDrawingPoints: 2000,
   maxPathSegments: 8,
   maxImageBytes: 512 * 1024,
   maxFontSizePt: 400,

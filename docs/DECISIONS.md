@@ -225,3 +225,74 @@ no global cache, so batch jobs and server rendering are unaffected.
 
 jsdom 30 and Vitest 5 declare engines `^22 || ^24 || >=26`; Node 25 prints engine warnings
 but every suite passes locally. CI and releases use Node 22/24 LTS.
+
+## D-023 Conditional styles as declarative override rules (2026-10-21)
+
+**Context.** Labels need per-record appearance, not only visibility. The motivating case is a
+size strip (S, M, L, XL) where the record's size is drawn as white text on black, and hosts
+need the same for arbitrary fields.
+
+**Decision.** Every element may carry `styleRules: { when: Condition, set: StyleOverride }[]`.
+`when` reuses the existing condition language (D-012), so no new expression syntax exists.
+`set` is one flat, cross-type key set (`fill`, `color`, `stroke`, `strokeWidth`, `opacity`,
+`fontWeight`, `fontStyle`, `fontSize`). Each element type accepts only the keys that apply to
+it (`STYLE_OVERRIDE_KEYS`), and other keys are `UNKNOWN_PROPERTY` errors, consistent with the
+strict schema. `renderLabel` merges matching rules into a fresh element before the element
+renderer runs (`applyStyleRules`), so batch, print, preview and the editor share the single
+render path. Override values reuse the element's own decoders and limits (for example stroke
+widths), so an override can never produce an element that would fail validation. Limit:
+16 rules per element (`maxStyleRules`).
+
+**Alternatives rejected.** Per-type nested overrides mirroring each element's properties
+(heavier for users and the editor, and more validation surface). A separate "variant"
+element per case (duplicates geometry and breaks when the layout moves).
+
+## D-024 Shape and drawing element types; schema stays at version 1 (2026-10-21)
+
+**Decision.** Add `shape` (eight outlines defined in a unit square and scaled to the box) and
+`drawing` (a pencil stroke whose points are normalized to `[0, 1]` of its box, so move,
+resize, rotate, duplicate and unit conversion work unchanged). Both render to a single
+`<path>` through the existing allowlist; `stroke-linejoin` was added to it. The editor's
+pencil tool (`settings.tool = "pencil"`) captures pointer points in a ref, previews them in
+the overlay, and commits one `addElements` command on pointer-up. `createDrawingElement`
+simplifies strokes with Ramer–Douglas–Peucker (tolerance about 0.75 screen px) and caps them at
+2,000 points (`maxDrawingPoints`).
+
+**Schema version.** These are additive: every existing v1 template stays valid and renders
+identically, so `schemaVersion` stays 1 (TEMPLATE_FORMAT "Migrations and compatibility").
+Templates that use the new features are rejected by older 0.1.x builds with structured
+errors (`ELEMENT_TYPE_UNKNOWN`, `UNKNOWN_PROPERTY`), never misrendered.
+
+## D-025 Hand and Cursor tools reuse the existing viewport pan (2026-10-22)
+
+**Context.** Users zoom into a label and then need to move around it without risking an edit.
+The canvas already panned with the middle button or Space+drag through `store.viewport`. That
+viewport is a CSS transform on the stage, not a native scroll container.
+
+**Decision.** Add `"hand"` to `EditorSettings.tool` next to `select` (Cursor) and `pencil`. A
+Hand pointer-down starts the existing pan gesture at once, with no hit testing, selection,
+handles or drag threshold, so the label never jumps. Moves call `setViewport(panBy(start, dx, dy))`.
+Pointer capture, `pointercancel` and `lostpointercapture` end it the same way as other
+gestures, and changing the tool cancels any gesture in progress. Keyboard: V/H switch tools,
+Escape returns to the Cursor, and arrows pan in Hand mode (outside text fields). Hand stays
+enabled in read-only mode. Native scrolling was rejected: it would add a second source of
+truth for pan, and zoom-at-cursor, rulers and fit already depend on `viewport`. Pan is
+unbounded, as it was before, and **Fit to screen** recovers the view.
+
+**Consequences.** No template, history, dirty-state or save changes from navigation (tested
+at store, RTL and Playwright level). No new dependency. The label layer is memoized on
+zoom, not pan, so a pan frame re-renders only the stage transform, overlays and rulers.
+
+## D-026 Preset catalog in its own `/presets` entry (2026-10-22)
+
+**Context.** `/core` "import everything" measured 38.57 kB against a 37 kB ceiling (35 kB
+budget). About 4.6 kB of that is the preset catalog, which most server and render-only users
+never need.
+
+**Decision.** Move `getPresetSizes`, `getPresetTemplates`, `getPresetTemplate` and
+`createPresetRegistry` (and their types) to `@your-org/erp-label-studio/presets`, a React-free
+entry checked by post-build like `/core`. The root entry re-exports it, so editor users change
+nothing. `cloneTemplate` moved to `core/validation/clone-template.ts` and stays in `/core`
+(storage depends on it). This is a breaking change for `/core` imports of the catalog. It is
+acceptable because 0.1.0 has not been published, and the migration is one import line
+(CHANGELOG, API.md). Budgets were not changed. A new budget was added for the new entry.

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { buildPrintDocument, getPresetTemplate, getPresetSizes, computePageSpec, buildCalibrationDocument } from "../../src/entries/core";
+import { buildPrintDocument, computePageSpec, buildCalibrationDocument } from "../../src/entries/core";
+import { getPresetTemplate, getPresetSizes } from "../../src/entries/presets";
 import { waitForEditor } from "./helpers";
 
 const MM_TO_PT = 72 / 25.4;

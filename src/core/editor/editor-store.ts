@@ -18,12 +18,20 @@ import type { LabelTemplate } from "../schema/types";
 import { validateTemplate, type ValidateOptions } from "../validation/validate-template";
 import { applyCommand, type EditorCommand } from "./commands";
 
+export type EditorTool = "select" | "hand" | "pencil";
+
 export interface EditorSettings {
   readonly gridSize: number;
   readonly showGrid: boolean;
   readonly snapToGrid: boolean;
   readonly snapToElements: boolean;
   readonly showRulers: boolean;
+  /**
+   * Active canvas tool: `select` (cursor: select, move, resize, marquee), `hand`
+   * (drag pans the view; never edits) or `pencil` (freehand drawing). A view
+   * setting only: switching tools never changes the template or history.
+   */
+  readonly tool: EditorTool;
 }
 
 export interface EditorState {
@@ -86,6 +94,7 @@ export const DEFAULT_SETTINGS: EditorSettings = Object.freeze({
   snapToGrid: true,
   snapToElements: true,
   showRulers: true,
+  tool: "select",
 });
 
 interface HistoryEntry {

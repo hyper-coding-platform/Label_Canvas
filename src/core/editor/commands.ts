@@ -155,6 +155,7 @@ export function convertTemplateUnits(t: LabelTemplate, unit: LengthUnit, canvasP
     const out: Record<string, unknown> = { ...el };
     for (const k of LENGTH_KEYS) if (typeof out[k] === "number") out[k] = c(out[k] as number);
     if (el.type === "text" && el.border) out.border = omitUndefined({ ...el.border, width: c(el.border.width), radius: el.border.radius === undefined ? undefined : c(el.border.radius) });
+    if (el.styleRules) out.styleRules = el.styleRules.map((r) => (r.set.strokeWidth === undefined ? r : { ...r, set: { ...r.set, strokeWidth: c(r.set.strokeWidth) } }));
     return out as unknown as LabelElement;
   });
   return { ...t, canvas: canvas as unknown as LabelCanvas, elements };

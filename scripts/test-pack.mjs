@@ -76,10 +76,15 @@ writeFileSync(
   probe,
   `
 const core = await import("@your-org/erp-label-studio/core");
-for (const n of ["validateTemplate","parseTemplate","renderLabel","renderNodeToSvgString","generateLabels","buildPrintDocument","printLabels","getPresetSizes","getPresetTemplates","createMemoryTemplateStorage","validateTemplateData"]) {
+for (const n of ["validateTemplate","parseTemplate","renderLabel","renderNodeToSvgString","generateLabels","buildPrintDocument","printLabels","createMemoryTemplateStorage","validateTemplateData","cloneTemplate"]) {
   if (typeof core[n] !== "function") throw new Error("core missing " + n);
 }
-const t = core.getPresetTemplate("textile-hang-tag");
+if ("getPresetTemplates" in core) throw new Error("core still exports the preset catalog");
+const presets = await import("@your-org/erp-label-studio/presets");
+for (const n of ["getPresetSizes","getPresetTemplates","getPresetTemplate","createPresetRegistry"]) {
+  if (typeof presets[n] !== "function") throw new Error("presets missing " + n);
+}
+const t = presets.getPresetTemplate("textile-hang-tag");
 const r = core.renderLabel(t, { store:{name:"S"}, product:{ name:"N", barcode:"260042130115" }, pricing:{ mrp: 1 } });
 if (!r.ok) throw new Error("render failed: " + JSON.stringify(r.issues));
 const main = await import("@your-org/erp-label-studio");
@@ -95,7 +100,7 @@ for (const internal of ["@your-org/erp-label-studio/dist/core.js", "@your-org/er
   try { await import(internal); throw new Error("internal path importable: " + internal); }
   catch (e) { if (e.code !== "ERR_PACKAGE_PATH_NOT_EXPORTED") throw e; }
 }
-console.log("exports probe: OK (core, root, renderer, headless, styles.css; internals blocked)");
+console.log("exports probe: OK (core, presets, root, renderer, headless, styles.css; internals blocked)");
 `,
 );
 run(`node "${probe}"`, example);

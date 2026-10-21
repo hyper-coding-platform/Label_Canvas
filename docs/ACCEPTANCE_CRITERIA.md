@@ -45,7 +45,7 @@ not produced counts as **NOT VERIFIED**, not as passing.
 | Editor drag frame (100 elements) | ≤ 16 ms scripting per pointer-move frame (Chromium trace) |
 | Max elements per template (hard limit, configurable) | 1,000 |
 
-## Gate status — 2026-10-20 (v0.1.0, unreleased)
+## Gate status — 2026-10-22 (v0.1.0, unreleased; after Steps N and O)
 
 | # | Status | Evidence / note |
 | --- | --- | --- |
@@ -55,17 +55,17 @@ not produced counts as **NOT VERIFIED**, not as passing.
 | G4 | ✅ | architecture test + post-build graph check + Node import smoke |
 | G5–G8 | ✅ | unit/integration/security suites (422 tests) |
 | G9 | ✅ | zxing-cpp decodes every format (encoder, renderer, presets, on-screen in Chromium, server SVG in Next.js) |
-| G10–G11 | ✅ | Playwright: Chromium, Firefox, WebKit — 79 passed / 8 explicitly skipped (Chromium-only CDP/PDF); one unexplained 2-test failure in 1 of 6 three-browser runs under load (see plan "Open defects") |
+| G10–G11 | ✅ | Playwright: Chromium, Firefox, WebKit — 91 passed / 8 explicitly skipped (Chromium-only CDP/PDF), 2026-10-22, incl. Hand/Cursor, touch/pen pan, style rules, pencil; earlier intermittent failure not seen again (see plan "Open defects") |
 | G12 | ✅ (automated) | PDF page sizes and A4 label positions verified in Chromium |
 | G13 | ❌ NOT PERFORMED | no physical printers available — release must not claim hardware compatibility |
 | G14 | ❌ NOT PERFORMED | no scanners/verifier available — release must not claim scanner compatibility |
 | G15–G16 | ✅ | batch + security suites; bench: 10k records heap flat |
 | G17 | ✅ (Next 16.4.2 + React 19.3.1) | production server tests 8/8; React 18 **not verified** |
 | G18–G19 | ✅ | host-shell, CSS-scope, theme, Ant Design slots, headless tests |
-| G20 | ⚠️ exception | core "all exports" 36.88 kB vs 35 kB — documented in PERFORMANCE.md, **awaiting owner approval**; all other size budgets pass |
-| G21 | ⚠️ exception | 1,000-element drag 15.6–16.5 ms (at limit); supported interaction target documented as ≤ 500 elements — **awaiting owner approval** |
+| G20 | ✅ | `npm run size` exit 0: core all exports 33.78 kB ≤ 35 kB (exception resolved by the `/presets` entry, D-026); new `/presets` budget 25 kB (23.88 kB) **needs owner confirmation**; all other budgets pass |
+| G21 | ⚠️ exception | 1,000-element drag 15.6–17.3 ms and Hand pan 18.4–19.8 ms (browser rendering; script ≈ 1.1 ms); ≤ 500 elements within 16 ms; supported interaction target documented as ≤ 500 elements — **awaiting owner approval** |
 | G22 | ✅ | `npm audit` 0 vulnerabilities (prod and dev); no known critical/high issues |
 | G23–G24 | ✅ | public-api test (exports ⇔ docs/API.md); architecture test (no TODO/placeholders) |
 | G25 | ❌ NOT VERIFIED | `.github/workflows/ci.yml` defined; never run on a CI host |
 
-**Readiness: NOT YET VERIFIED** — CI has not run, two budget exceptions need approval, and physical print/scan validation has not been performed.
+**Readiness: NOT YET VERIFIED** — CI has not run, the 1,000-element interaction exception and the new `/presets` budget need owner approval, and physical print/scan validation has not been performed.

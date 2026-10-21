@@ -370,3 +370,174 @@ test.describe("viewport and multi-selection", () => {
     await expect(page.getByText("2 elements selected")).toBeVisible();
   });
 });
+
+test.describe("conditional style, shapes and pencil", () => {
+  test("a style rule highlights the size that matches the sample record", async ({ page }) => {
+    await page.goto("/?s=editor");
+    await waitForEditor(page);
+    await page.getByTestId("els-layer-size").click();
+    await page.getByTestId("els-add-style-rule").click();
+    const rule = page.getByTestId("els-style-rule-0");
+    await rule.getByLabel("Field").selectOption("variant.size");
+    await rule.getByLabel("Value").fill("M");
+    await rule.getByLabel("Value").press("Enter");
+    const group = page.locator('.els-canvas__label g[data-element-id="size"]');
+    // Record 1 has size M: black box, white text.
+    await expect(group.locator('rect[fill="#000000"]')).toHaveCount(1);
+    await expect(group.locator("text")).toHaveAttribute("fill", "#ffffff");
+    // Record 2 has size XL: no highlight.
+    // Click empty canvas space (outside the label) to deselect and show the template settings.
+    await page.getByTestId("els-canvas").click({ position: { x: 4, y: 4 } });
+    await page.getByLabel("Sample record").selectOption("1");
+    await expect(group.locator('rect[fill="#000000"]')).toHaveCount(0);
+    await expect(group.locator("text")).toHaveAttribute("fill", "#000000");
+  });
+
+  test("adds a shape, and the pencil draws a freehand stroke until Escape", async ({ page }) => {
+    await page.goto("/?s=editor");
+    await waitForEditor(page);
+    const before = (await templateJson(page)).elements.length;
+    await page.getByRole("button", { name: "Add shape" }).click();
+    await expect(page.locator('.els-canvas__label g[data-element-type="shape"] path')).toHaveCount(1);
+    const pencil = page.getByRole("button", { name: "Pencil: draw freehand" });
+    await pencil.click();
+    await expect(pencil).toHaveAttribute("aria-pressed", "true");
+    const box = (await page.getByTestId("els-overlay").boundingBox())!;
+    const from = { x: box.x + box.width * 0.2, y: box.y + box.height * 0.6 };
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 12; i += 1) {
+      await page.mouse.move(from.x + i * 8, from.y + Math.sin(i / 2) * 20);
+      await page.waitForTimeout(16);
+    }
+    await expect(page.getByTestId("els-pencil-preview")).toBeVisible();
+    await page.mouse.up();
+    const t = await templateJson(page);
+    expect(t.elements.length).toBe(before + 2);
+    expect(t.elements.at(-1)!.type).toBe("drawing");
+    await expect(page.locator('.els-canvas__label g[data-element-type="drawing"] path')).toHaveCount(1);
+    await expect(page.getByTestId("els-pencil-preview")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(pencil).toHaveAttribute("aria-pressed", "false");
+  });
+});
+
+test.describe("Hand and Cursor tools", () => {
+  const overlayBox = async (page: Page) => (await page.getByTestId("els-overlay").boundingBox())!;
+  /** Screen x of the horizontal ruler's 0 tick, read from the DOM (Playwright's boundingBox() of SVG text is unreliable in WebKit). */
+  const rulerZeroX = (page: Page) =>
+    page.evaluate(() => {
+      const label = [...document.querySelectorAll(".els-ruler--horizontal .els-ruler__label")].find((t) => t.textContent === "0");
+      // Centre of the tick line: engines differ on whether its box includes the stroke width.
+      const r = label?.previousElementSibling?.getBoundingClientRect();
+      return r ? r.x + r.width / 2 : Number.NaN;
+    });
+
+  test("cursor edits, hand pans (zoomed, to the edges), and only real edits are saved", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto("/?s=editor");
+    await waitForEditor(page);
+    const k = await pxPerMm(page);
+
+    // 1–3. Cursor: select and move an element.
+    await expect(page.getByRole("button", { name: "Cursor: select and edit" })).toHaveAttribute("aria-pressed", "true");
+    const start = await element(page, "barcode");
+    const from = await center(page.locator('[data-hit-id="barcode"]'));
+    await drag(page, from, { x: from.x + 3 * k, y: from.y });
+    await expect.poll(async () => (await element(page, "barcode")).x).toBeCloseTo(start.x + 3, 0);
+    const moved = await element(page, "barcode");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByTestId("els-save-status")).toHaveText("All changes saved");
+
+    // 4–6. Hand: dragging over the element moves the view, never the element.
+    const hand = page.getByRole("button", { name: "Hand: pan the view" });
+    await hand.click();
+    await expect(hand).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("els-canvas")).toHaveCSS("cursor", "grab");
+    const json = JSON.stringify(await templateJson(page));
+    const box0 = await overlayBox(page);
+    const ruler0 = await rulerZeroX(page);
+    expect(ruler0).toBeCloseTo(box0.x, 0);
+    const over = await center(page.locator('[data-hit-id="barcode"]'));
+    await drag(page, over, { x: over.x - 60, y: over.y - 40 });
+    const box1 = await overlayBox(page);
+    expect(box1.x - box0.x).toBeCloseTo(-60, 0);
+    expect(box1.y - box0.y).toBeCloseTo(-40, 0);
+    // Rulers follow the view exactly: the 0 tick stays on the label's left edge.
+    expect(await rulerZeroX(page)).toBeCloseTo(box1.x, 0);
+    expect(JSON.stringify(await templateJson(page))).toBe(json);
+    // The pan started over the selected barcode: the selection is unchanged and no resize handles appear.
+    await expect(page.getByTestId("els-selection-barcode")).toHaveCount(1);
+    await expect(page.getByTestId("els-handle-se")).toHaveCount(0);
+
+    // 7. Zoom in, then pan to the bottom-right corner of the enlarged label.
+    for (let i = 0; i < 4; i += 1) await page.getByRole("button", { name: "Zoom in" }).click();
+    const canvasBox = (await page.getByTestId("els-canvas").boundingBox())!;
+    let label = await overlayBox(page);
+    expect(label.width).toBeGreaterThan(canvasBox.width);
+    const c = { x: canvasBox.x + canvasBox.width / 2, y: canvasBox.y + canvasBox.height / 2 };
+    for (let i = 0; i < 6 && label.x + label.width > canvasBox.x + canvasBox.width; i += 1) {
+      await drag(page, c, { x: c.x - canvasBox.width * 0.4, y: c.y - canvasBox.height * 0.4 }, 4);
+      label = await overlayBox(page);
+    }
+    // The bottom-right corner is actually inside the visible canvas (not panned past it).
+    expect(label.x + label.width).toBeLessThanOrEqual(canvasBox.x + canvasBox.width);
+    expect(label.x + label.width).toBeGreaterThan(canvasBox.x);
+    expect(label.y + label.height).toBeLessThanOrEqual(canvasBox.y + canvasBox.height + 1);
+    expect(label.y + label.height).toBeGreaterThan(canvasBox.y);
+    expect(JSON.stringify(await templateJson(page))).toBe(json);
+    // Panning and zooming never make the document dirty.
+    await expect(page.getByTestId("els-save-status")).toHaveText("All changes saved");
+
+    // 8. Back to Cursor: fit, then resize with a handle.
+    await page.keyboard.press("v");
+    await page.getByRole("button", { name: "Fit to screen" }).click();
+    await page.getByTestId("els-layer-mrp").click();
+    const mrp = await element(page, "mrp");
+    const kk = await pxPerMm(page);
+    const handle = await center(page.getByTestId("els-handle-se"));
+    await drag(page, handle, { x: handle.x, y: handle.y + 4 * kk });
+    await expect.poll(async () => (await element(page, "mrp")).height).toBeGreaterThan(mrp.height);
+    const resized = await element(page, "mrp");
+
+    // 9–10. Save and reload: element edits persist; nothing from the view does.
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByTestId("els-save-status")).toHaveText("All changes saved");
+    await page.reload();
+    await waitForEditor(page);
+    expect(await element(page, "barcode")).toEqual(moved);
+    expect(await element(page, "mrp")).toEqual(resized);
+    expect(Object.keys(await templateJson(page))).not.toContain("viewport");
+    expect(errors).toEqual([]);
+  });
+
+  test("touch and pen pointers pan with the Hand tool; Space+drag pans with the Cursor", async ({ page }) => {
+    await page.goto("/?s=editor");
+    await waitForEditor(page);
+    const canvas = page.getByTestId("els-canvas");
+    const json = JSON.stringify(await templateJson(page));
+    await page.getByRole("button", { name: "Hand: pan the view" }).click();
+    for (const [pointerType, pointerId] of [["touch", 11], ["pen", 12]] as const) {
+      const b0 = await overlayBox(page);
+      const base = { pointerType, pointerId, isPrimary: true, bubbles: true };
+      await canvas.dispatchEvent("pointerdown", { ...base, button: 0, buttons: 1, clientX: 300, clientY: 300 });
+      await canvas.dispatchEvent("pointermove", { ...base, buttons: 1, clientX: 340, clientY: 330 });
+      await canvas.dispatchEvent("pointerup", { ...base, button: 0, buttons: 0, clientX: 340, clientY: 330 });
+      const b1 = await overlayBox(page);
+      expect(b1.x - b0.x, pointerType).toBeCloseTo(40, 0);
+      expect(b1.y - b0.y, pointerType).toBeCloseTo(30, 0);
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "Cursor: select and edit" })).toHaveAttribute("aria-pressed", "true");
+    const b0 = await overlayBox(page);
+    const over = await center(page.locator('[data-hit-id="barcode"]'));
+    await canvas.focus();
+    await page.keyboard.down("Space");
+    await drag(page, over, { x: over.x + 50, y: over.y });
+    await page.keyboard.up("Space");
+    expect((await overlayBox(page)).x - b0.x).toBeCloseTo(50, 0);
+    expect(JSON.stringify(await templateJson(page))).toBe(json);
+  });
+});

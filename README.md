@@ -16,7 +16,10 @@ systems, and makes no assumptions about your data model, backend or UI framework
 
 * **An embeddable editor** (`LabelEditor`) that lives inside your page. It does not take over
   your navbar, sidebar, fonts or theme. It provides drag, resize, rotate, rulers, grid,
-  snapping, layers, undo/redo, numeric property editing and keyboard access.
+  snapping, layers, undo/redo, numeric property editing and keyboard access. It also has
+  **Cursor** and **Hand** tools (V/H): Hand drags or arrow keys move the view around a zoomed
+  label without ever selecting or editing, and Space+drag pans with any tool. Shapes, a
+  pencil, and conditional styles (for example, highlight the record's size) are included.
 * **Physical units** (mm, in, px), 19 preset sizes (thermal rolls, hang tags, shelf, shipping
   4×6 in, jewellery, A4/Letter sheets) and 10 editable industry templates.
 * **Safe data binding**: `product.sku`, `pricing.mrp` and so on, with formatting, fallbacks
@@ -124,7 +127,8 @@ See [docs/INTEGRATION.md](docs/INTEGRATION.md).
 ## Bulk generation and printing
 
 ```ts
-import { generateLabels, printLabels, getPresetSizes } from "@your-org/erp-label-studio/core";
+import { generateLabels, printLabels } from "@your-org/erp-label-studio/core";
+import { getPresetSizes } from "@your-org/erp-label-studio/presets";
 
 for await (const label of generateLabels(template, productsAsyncIterable, { signal, onProgress })) {
   if (label.ok) archive(label.svg!); else report(label.index, label.issues);
@@ -148,6 +152,8 @@ document.skipped; // records not printed (invalid or missing data)
   `createCanvasTextMeasurer` for real metrics, and use it for both preview and print.
 * The canvas is not navigable element by element with a screen reader; the Layers list and
   Properties panel provide full non-pointer access.
+* Panning is not bounded: the view can be moved away from the label. **Fit to screen** brings
+  it back. Pan and zoom are not saved with the template.
 
 ## Documentation
 

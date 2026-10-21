@@ -6,6 +6,7 @@ export default defineConfig({
     core: "src/entries/core.ts",
     renderer: "src/entries/renderer.ts",
     headless: "src/entries/headless.ts",
+    presets: "src/entries/presets.ts",
   },
   format: ["esm"],
   target: "es2020",

@@ -12,7 +12,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const core = await import(pathToFileURL(join(root, "dist", "core.js")).href);
-const { validateTemplate, parseTemplate, renderLabel, renderNodeToSvgString, generateLabels, getPresetTemplate, buildPrintDocument } = core;
+const { getPresetTemplate } = await import(pathToFileURL(join(root, "dist", "presets.js")).href);
+const { validateTemplate, parseTemplate, renderLabel, renderNodeToSvgString, generateLabels, buildPrintDocument } = core;
 const gc = globalThis.gc ?? null;
 
 function stats(samples) {

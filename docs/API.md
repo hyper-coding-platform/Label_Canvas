@@ -4,10 +4,11 @@
 
 | Entry point | Use it for | React needed | Client boundary |
 | --- | --- | --- | --- |
-| `@your-org/erp-label-studio/core` | Validation, rendering to SVG, bulk generation, printing, presets, storage, headless store | No | No (safe in server code, workers, Node) |
+| `@your-org/erp-label-studio/core` | Validation, rendering to SVG, bulk generation, printing, storage, headless store | No | No (safe in server code, workers, Node) |
+| `@your-org/erp-label-studio/presets` | Built-in label sizes and industry templates; preset registries | No | No (safe in server code, workers, Node) |
 | `@your-org/erp-label-studio/renderer` | `LabelRenderer` and `BarcodePreview` React components only | Yes | `"use client"` |
 | `@your-org/erp-label-studio/headless` | React hooks to build your own editor UI | Yes | `"use client"` |
-| `@your-org/erp-label-studio` | Everything above, plus the default editor UI (`LabelEditor`) | Yes | `"use client"` |
+| `@your-org/erp-label-studio` | Everything above (including presets), plus the default editor UI (`LabelEditor`) | Yes | `"use client"` |
 | `@your-org/erp-label-studio/styles.css` | Scoped styles for the editor and previews | n/a | Import once |
 
 Anything not listed here is internal and may change without notice. The export lists are
@@ -58,7 +59,7 @@ specified in [TEMPLATE_FORMAT.md](TEMPLATE_FORMAT.md).
 | `BUILT_IN_MIGRATIONS` | `readonly TemplateMigration[]` | Empty: schema v1 is the first version. |
 | `serializeTemplate` | `(template, space?) => string` | Stable JSON for export or storage. |
 | `validateTemplateData` | `(template, record, options?: { schema?, …renderOptions }) => Issue[]` | Dry-run a record: required fields, barcode data, formatting, symbology rules, and schema conformance (`FIELD_NOT_IN_SCHEMA`, `SCHEMA_REQUIRED_FIELD_MISSING`). |
-| `getTemplateFieldPaths` | `(template) => string[]` | Every binding path used (values and conditions). |
+| `getTemplateFieldPaths` | `(template) => string[]` | Every binding path used (values, conditions and style rules). |
 | `DEFAULT_LIMITS` | `TemplateLimits` | Resource limits; override any via `options.limits`. See [SECURITY.md](SECURITY.md). |
 | `BUILT_IN_FONTS` | `FontDefinition[]` | `sans`, `serif`, `mono`, `condensed` (system font stacks; nothing is downloaded). |
 | `createFontRegistry` | `(extra?: FontDefinition[]) => FontRegistry` | Register host font ids (validated ids and stacks). Pass as `fonts` to validate/render/editor. |
@@ -75,6 +76,8 @@ See [DATA_BINDING.md](DATA_BINDING.md).
 | `parsePath` | `(path, maxSegments?) => ParsePathResult` | Validates a binding path. Rejects `__proto__`, `prototype` and `constructor`. |
 | `resolveValue` | `(source, record, options?) => ResolvedValue` | `{ status: "ok", text } \| { status: "missing", required } \| { status: "invalid", message }`. |
 | `evaluateCondition` | `(condition, record) => boolean` | Declarative only; no expressions. |
+| `applyStyleRules` | `(element, record, unit) => { element, opacity }` | Applies an element's `styleRules` for one record (later rules win). Returns the same element when nothing matches. `renderLabel` calls it for every element. See [DATA_BINDING.md](DATA_BINDING.md#conditional-styles). |
+| `STYLE_OVERRIDE_KEYS` | `Record<ElementType, (keyof StyleOverride)[]>` | Override keys each element type accepts in a style rule's `set`. |
 | `sampleRecordFromSchema` | `(schema) => DataRecord` | Builds a preview record from `DataField.example` values. |
 | `inferDataSchema` | `(record, options?) => DataSchema` | Field discovery from a sample ERP record (bounded, cycle-safe, skips unsafe keys). |
 
@@ -88,6 +91,7 @@ See [DATA_BINDING.md](DATA_BINDING.md).
 | `roundTo(value, decimals)` | Half away from zero, no `-0`. |
 | `rotatedBounds(rect, degrees)` | Axis-aligned bounds of a rect rotated about its centre. |
 | `normalizeRotation(degrees)` | Into `[0, 360)`. |
+| `SHAPE_KINDS` | Outlines of the `shape` element: `ellipse`, `triangle`, `diamond`, `pentagon`, `hexagon`, `octagon`, `star`, `arrow`. |
 
 ## Barcodes (core)
 
@@ -149,7 +153,12 @@ See [PRINTING.md](PRINTING.md).
 `PrintLayout` = `RollLayout` (`{ kind: "roll", unit, gap?, orientation?, unprintableMargin? }`)
 or `SheetLayout` (`{ kind: "sheet", unit, page, orientation?, margins, columns, rows, gapX, gapY, cell?, unprintableMargin? }`).
 
-## Presets (core)
+## Presets (`/presets`)
+
+The catalog has its own entry so `/core` consumers do not ship it (about 4.6 kB min + brotli; see
+[PERFORMANCE.md](PERFORMANCE.md)). The root entry re-exports it. **Migration from earlier 0.1.0
+builds:** change `import { getPresetTemplate } from "@your-org/erp-label-studio/core"` to
+`from "@your-org/erp-label-studio/presets"`. `cloneTemplate` stays in `/core`.
 
 | Export | Notes |
 | --- | --- |
@@ -157,7 +166,7 @@ or `SheetLayout` (`{ kind: "sheet", unit, page, orientation?, margins, columns, 
 | `getPresetTemplates(filter?)` | 10 industry templates, each with `template`, `dataSchema` and `sampleData`. Read-only. |
 | `getPresetTemplate(id, overrides?)` | An **editable deep copy** of a built-in template. |
 | `createPresetRegistry()` | An isolated registry with `addSize`, `addTemplate` (validated), `listSizes`, `listTemplates`, `getTemplate`. Built-ins cannot be replaced. |
-| `cloneTemplate(template, { id?, name? })` | Deep copy under a new id. |
+| `cloneTemplate(template, { id?, name? })` | (`/core`) Deep copy under a new id. |
 
 ## Persistence (core)
 
@@ -186,10 +195,11 @@ See the "Persistence" section of [INTEGRATION.md](INTEGRATION.md).
 | Export | Notes |
 | --- | --- |
 | `createEditorStore` | `(template, options?) => EditorStore`. Framework-independent session: `getState`, `subscribe`, `dispatch(command, { coalesceKey?, keepSelection? })`, `undo`, `redo`, `select(ids, mode)`, `setViewport`, `updateSettings`, `replaceTemplate`, `markSaved`, `destroy`. **Every command result is validated**; invalid results are rejected (`lastRejection`). |
-| `DEFAULT_SETTINGS` | Grid 1 unit, grid/snap/rulers on. |
+| `DEFAULT_SETTINGS` | Grid 1 unit, grid/snap/rulers on, `tool: "select"` (Cursor). `"hand"` pans the view and never edits; `"pencil"` draws freehand strokes. `EditorTool` is the type. |
 | `applyCommand` | Pure command reducer (`addElements`, `updateElement`, `updateElements`, `moveElements`, `removeElements`, `duplicateElements`, `reorderElement`, `setCanvas`, `setMeta`). |
 | `convertTemplateUnits` | Converts every length to another unit (font sizes stay in points). |
 | `createElement` | `(template, type, { x?, y? })`: a valid new element sized for the template's unit. |
+| `createDrawingElement` | `(template, points, { strokeWidth, stroke?, tolerance?, maxPoints? }) => DrawingElement | null`: turns a freehand stroke in label coordinates into a valid `drawing` element (simplified, normalized to its box). `null` for strokes without extent. |
 | `createBlankTemplate` | `({ id?, name?, width?, height?, unit? })`. |
 | `useEditorStore` | `(initialTemplate, { template?, onTemplateChange?, …storeOptions })`: creates and owns a store. StrictMode-safe. |
 | `useControlledTemplate` | `(store, template, onTemplateChange)`: controlled-template semantics for any store. |
@@ -200,6 +210,7 @@ See the "Persistence" section of [INTEGRATION.md](INTEGRATION.md).
 | `useTemplateStorage` | `(storage, id) => { state, save, reload }`. Loading, not-found and error states; aborts stale loads; `save` uses revision checks. |
 | `snapMove`, `resizeRect`, `alignRects`, `RESIZE_HANDLES` | Pure interaction geometry (snapping guides, rotation-aware resize, alignment). |
 | `screenToLabel`, `labelToScreen`, `screenDeltaToLabel`, `pixelsPerUnit`, `fitZoom`, `zoomAt`, `clampZoom` | Viewport transforms. The zoom never changes saved geometry. |
+| `panBy` | `(viewport, dx, dy) => Viewport`: moves the view by a screen-pixel delta (Hand tool, Space+drag, arrow keys in Hand mode). Never touches the template, history or dirty state. |
 | `LabelRenderer` | Re-exported for convenience. |
 
 ## Default editor UI (`@your-org/erp-label-studio`)

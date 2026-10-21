@@ -4,15 +4,22 @@ import type { ElementPatch } from "../../core/editor/commands";
 import { alignRects } from "../../core/editor/interactions";
 import { displayDecimals, roundTo } from "../../core/geometry/units";
 import { checkImageSource } from "../../core/render/image-policy";
+import { SHAPE_KINDS } from "../../core/render/shapes";
+import { STYLE_OVERRIDE_KEYS } from "../../core/render/style-rules";
 import { DEFAULT_LIMITS } from "../../core/schema/limits";
 import { getPresetSizes } from "../../core/presets/registry";
 import type {
   BarcodeFormat,
   Condition,
+  ElementType,
+  FieldCondition,
   FieldValue,
   LabelCanvas,
   LabelElement,
   LengthUnit,
+  ShapeKind,
+  StyleOverride,
+  StyleRule,
   TextStyle,
   ValueFormat,
   ValueSource,
@@ -285,42 +292,166 @@ const OPS: readonly SelectOption[] = [
   { value: "eq", label: "equals" },
   { value: "neq", label: "does not equal" },
   { value: "gt", label: "is greater than" },
+  { value: "gte", label: "is at least" },
   { value: "lt", label: "is less than" },
+  { value: "lte", label: "is at most" },
   { value: "contains", label: "contains" },
+  { value: "startsWith", label: "starts with" },
 ];
 
-function ConditionEditor({ el, patch, error }: { el: LabelElement; patch: (field: string, p: ElementPatch) => boolean; error?: string }) {
+const PRESENCE_OPS: readonly string[] = ["exists", "missing", "empty", "notEmpty"];
+
+/** Field, operator and value of a single (leaf) condition. Shared by visibility and style rules. */
+function ConditionFields({ name, leaf, onChange }: { name: string; leaf: FieldCondition; onChange: (c: FieldCondition) => void }) {
+  const hasValue = "value" in leaf;
+  const text = (op: string) => op === "contains" || op === "startsWith";
+  return (
+    <>
+      <FieldPicker name={`${name}-field`} label="Field" value={leaf.field} onChange={(field) => onChange({ ...leaf, field })} />
+      <SelectProp
+        name={`${name}-op`}
+        label="Condition"
+        value={leaf.op}
+        options={OPS}
+        onChange={(op) => onChange(PRESENCE_OPS.includes(op) ? ({ field: leaf.field, op } as FieldCondition) : ({ field: leaf.field, op, value: hasValue ? leaf.value : "" } as FieldCondition))}
+      />
+      {hasValue && <TextProp name={`${name}-value`} label="Value" value={String(leaf.value)} onCommit={(v) => onChange({ ...leaf, value: /^-?\d+(\.\d+)?$/.test(v) && !text(leaf.op) ? Number(v) : v })} />}
+    </>
+  );
+}
+
+/** Advanced (all/any/not) conditions are kept intact; the UI offers removal only. */
+function AdvancedCondition({ what, onRemove }: { what: string; onRemove: () => void }) {
   const { c, readOnly } = useEditorContext();
+  return (
+    <div className="els-field">
+      <p className="els-hint">This {what} uses an advanced condition (all/any/not). Edit it in the template JSON, or remove it.</p>
+      <c.Button variant="ghost" disabled={readOnly} onClick={onRemove}>
+        Remove {what}
+      </c.Button>
+    </div>
+  );
+}
+
+function ConditionEditor({ el, patch, error }: { el: LabelElement; patch: (field: string, p: ElementPatch) => boolean; error?: string }) {
   const cond = el.condition;
   const leaf = cond && "field" in cond ? cond : null;
-  if (cond && !leaf) {
-    return (
-      <div className="els-field">
-        <p className="els-hint">This element uses an advanced condition (all/any/not). Edit it in the template JSON, or remove it.</p>
-        <c.Button variant="ghost" disabled={readOnly} onClick={() => patch("condition", { condition: undefined })}>
-          Remove condition
-        </c.Button>
-      </div>
-    );
-  }
-  const hasValue = leaf && "value" in leaf;
   const set = (next: Condition | undefined) => patch("condition", { condition: next });
+  if (cond && !leaf) return <AdvancedCondition what="condition" onRemove={() => set(undefined)} />;
   return (
     <>
       <SelectProp name="cond-mode" label="Show element" value={leaf ? "when" : "always"} options={[{ value: "always", label: "Always" }, { value: "when", label: "Only when…" }]} onChange={(m) => set(m === "always" ? undefined : { field: "product.sku", op: "exists" })} {...(error ? { error } : {})} />
-      {leaf && (
-        <>
-          <FieldPicker name="cond-field" label="Field" value={leaf.field} onChange={(field) => set({ ...leaf, field } as Condition)} />
-          <SelectProp
-            name="cond-op"
-            label="Condition"
-            value={leaf.op}
-            options={OPS}
-            onChange={(op) => set(["exists", "missing", "empty", "notEmpty"].includes(op) ? ({ field: leaf.field, op } as Condition) : ({ field: leaf.field, op, value: hasValue ? leaf.value : "" } as Condition))}
-          />
-          {hasValue && <TextProp name="cond-value" label="Value" value={String(leaf.value)} onCommit={(v) => set({ ...leaf, value: /^-?\d+(\.\d+)?$/.test(v) && leaf.op !== "contains" ? Number(v) : v } as Condition)} />}
-        </>
+      {leaf && <ConditionFields name="cond" leaf={leaf} onChange={set} />}
+    </>
+  );
+}
+
+/* ------------------------------------------------------ conditional style */
+
+/** Starting point for a new rule: the common "highlight when it matches" case for text. */
+const NEW_RULE_SET: Readonly<Record<ElementType, StyleOverride>> = {
+  text: { fill: "#000000", color: "#ffffff" },
+  barcode: { opacity: 0.3 },
+  qrcode: { opacity: 0.3 },
+  image: { opacity: 0.3 },
+  rect: { fill: "#000000" },
+  shape: { fill: "#000000" },
+  line: { stroke: "#c62828" },
+  drawing: { stroke: "#c62828" },
+};
+
+function overrideLabel(key: keyof StyleOverride, type: ElementType): string {
+  const textual = type === "text";
+  switch (key) {
+    case "fill":
+      return type === "rect" || type === "shape" ? "Fill" : "Background";
+    case "color":
+      return textual ? "Text colour" : "Bar colour";
+    case "stroke":
+      return textual || type === "rect" || type === "shape" ? "Border colour" : "Colour";
+    case "strokeWidth":
+      return textual || type === "rect" || type === "shape" ? "Border width" : "Thickness";
+    case "fontWeight":
+      return "Weight";
+    case "fontStyle":
+      return "Style";
+    case "fontSize":
+      return "Size";
+    case "opacity":
+      return "Opacity";
+  }
+}
+
+function OverrideFields({ name, type, value, unit, onChange }: { name: string; type: ElementType; value: StyleOverride; unit: LengthUnit; onChange: (o: StyleOverride) => void }) {
+  const set = (key: keyof StyleOverride, v: unknown) => onChange(withOptional(value, key, v));
+  const keys = STYLE_OVERRIDE_KEYS[type];
+  return (
+    <div className="els-grid2">
+      {keys.map((key) => {
+        const label = overrideLabel(key, type);
+        const n = `${name}-${key}`;
+        switch (key) {
+          case "fill":
+          case "color":
+          case "stroke":
+            return <ColorProp key={key} name={n} label={label} value={value[key]} allowEmpty onCommit={(v) => set(key, v)} />;
+          case "strokeWidth":
+            return <NumberProp key={key} name={n} label={label} unit={unit} value={value.strokeWidth} min={0} step={unitStep(unit) / 2} precision={3} allowEmpty hint="Empty = unchanged" onCommit={(v) => set(key, v)} />;
+          case "fontSize":
+            return <NumberProp key={key} name={n} label={label} unit="pt" value={value.fontSize} min={0.5} max={DEFAULT_LIMITS.maxFontSizePt} step={0.5} precision={2} allowEmpty hint="Empty = unchanged" onCommit={(v) => set(key, v)} />;
+          case "opacity":
+            return <NumberProp key={key} name={n} label={label} unit="%" value={value.opacity === undefined ? undefined : Math.round(value.opacity * 100)} min={0} max={100} step={5} precision={0} allowEmpty hint="Empty = unchanged" onCommit={(v) => set(key, v === undefined ? undefined : Math.min(100, Math.max(0, v)) / 100)} />;
+          case "fontWeight":
+            return <SelectProp key={key} name={n} label={label} value={value.fontWeight ?? ""} options={[{ value: "", label: "Unchanged" }, ...FONT_WEIGHTS]} onChange={(v) => set(key, v || undefined)} />;
+          case "fontStyle":
+            return <SelectProp key={key} name={n} label={label} value={value.fontStyle ?? ""} options={[{ value: "", label: "Unchanged" }, { value: "normal", label: "Normal" }, { value: "italic", label: "Italic" }]} onChange={(v) => set(key, v || undefined)} />;
+        }
+      })}
+    </div>
+  );
+}
+
+/**
+ * Ordered "when … then look like …" rules. Each edit replaces the whole
+ * `styleRules` array through one store command, so validation and undo cover it.
+ */
+function StyleRulesEditor({ el, patch, errors, unit }: { el: LabelElement; patch: (f: string, p: ElementPatch) => boolean; errors: FieldErrors; unit: LengthUnit }) {
+  const { c, readOnly, dataSchema } = useEditorContext();
+  const rules = el.styleRules ?? [];
+  const commit = (field: string, next: readonly StyleRule[]) => patch(field, { styleRules: next.length ? next : undefined });
+  const update = (i: number, rule: StyleRule) => commit(`rule${i}`, rules.map((r, k) => (k === i ? rule : r)));
+  const add = () => commit("styleRules", [...rules, { when: { field: dataSchema?.fields[0]?.path ?? "product.sku", op: "eq", value: "" }, set: NEW_RULE_SET[el.type] }]);
+  return (
+    <>
+      <p className="els-hint">Change how this element looks for records that match, for example highlight the size that applies. Later rules win.</p>
+      {rules.map((rule, i) => {
+        const leaf = "field" in rule.when ? rule.when : null;
+        const error = errors[`rule${i}`];
+        return (
+          <div key={i} className="els-rule" role="group" aria-label={`Style rule ${i + 1}`} data-testid={`els-style-rule-${i}`}>
+            <div className="els-rule__title">When</div>
+            {leaf ? <ConditionFields name={`rule${i}`} leaf={leaf} onChange={(when) => update(i, { ...rule, when })} /> : <p className="els-hint">Advanced condition (all/any/not), kept as written in the template JSON.</p>}
+            <div className="els-rule__title">Then</div>
+            <OverrideFields name={`rule${i}`} type={el.type} unit={unit} value={rule.set} onChange={(set) => update(i, { ...rule, set })} />
+            {error && (
+              <div className="els-field__error" role="alert">
+                ⚠ {error}
+              </div>
+            )}
+            <c.Button variant="ghost" disabled={readOnly} onClick={() => commit(`rule${i}`, rules.filter((_, k) => k !== i))}>
+              Remove rule
+            </c.Button>
+          </div>
+        );
+      })}
+      {errors.styleRules && (
+        <div className="els-field__error" role="alert">
+          ⚠ {errors.styleRules}
+        </div>
       )}
+      <c.Button variant="ghost" disabled={readOnly || rules.length >= DEFAULT_LIMITS.maxStyleRules} onClick={add} data-testid="els-add-style-rule">
+        Add style rule
+      </c.Button>
     </>
   );
 }
@@ -480,13 +611,19 @@ function ImageSection({ el, patch, errors }: { el: Extract<LabelElement, { type:
   );
 }
 
-function ShapeSection({ el, patch, errors, unit }: { el: Extract<LabelElement, { type: "rect" | "line" }>; patch: (f: string, p: ElementPatch) => boolean; errors: FieldErrors; unit: LengthUnit }) {
+const SHAPE_TITLES = { rect: "Rectangle", line: "Line", shape: "Shape", drawing: "Drawing" } as const;
+const capitalize = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
+
+function ShapeSection({ el, patch, errors, unit }: { el: Extract<LabelElement, { type: "rect" | "line" | "shape" | "drawing" }>; patch: (f: string, p: ElementPatch) => boolean; errors: FieldErrors; unit: LengthUnit }) {
+  // Filled outlines have an optional border; strokes (line, drawing) always have a colour and thickness.
+  const filled = el.type === "rect" || el.type === "shape";
   return (
-    <Section id="shape" title={el.type === "rect" ? "Rectangle" : "Line"}>
-      {el.type === "rect" && <ColorProp name="fill" label="Fill" value={el.fill} allowEmpty onCommit={(v) => patch("fill", { fill: v })} />}
-      <ColorProp name="stroke" label={el.type === "rect" ? "Border colour" : "Colour"} value={el.stroke ?? (el.type === "line" ? "#000000" : undefined)} allowEmpty={el.type === "rect"} onCommit={(v) => patch("stroke", { stroke: v })} />
+    <Section id="shape" title={SHAPE_TITLES[el.type]}>
+      {el.type === "shape" && <SelectProp<ShapeKind> name="shapeKind" label="Shape" value={el.shape} options={SHAPE_KINDS.map((k) => ({ value: k, label: capitalize(k) }))} onChange={(shape) => patch("shape", { shape })} />}
+      {filled && <ColorProp name="fill" label="Fill" value={el.fill} allowEmpty onCommit={(v) => patch("fill", { fill: v })} />}
+      <ColorProp name="stroke" label={filled ? "Border colour" : "Colour"} value={el.stroke ?? (filled ? undefined : "#000000")} allowEmpty={filled} onCommit={(v) => patch("stroke", { stroke: v })} />
       <div className="els-grid2">
-        <NumberProp name="strokeWidth" label={el.type === "rect" ? "Border width" : "Thickness"} unit={unit} value={el.strokeWidth ?? 0} min={0} step={unitStep(unit) / 2} precision={3} onCommit={(v) => patch("strokeWidth", { strokeWidth: el.type === "rect" ? v || undefined : v })} {...errorProp(errors.strokeWidth)} />
+        <NumberProp name="strokeWidth" label={filled ? "Border width" : "Thickness"} unit={unit} value={el.strokeWidth ?? 0} min={0} step={unitStep(unit) / 2} precision={3} onCommit={(v) => patch("strokeWidth", { strokeWidth: filled ? v || undefined : v })} {...errorProp(errors.strokeWidth)} />
         {el.type === "rect" && <NumberProp name="radius" label="Corner radius" unit={unit} value={el.cornerRadius ?? 0} min={0} step={unitStep(unit)} precision={3} onCommit={(v) => patch("cornerRadius", { cornerRadius: v || undefined })} {...errorProp(errors.cornerRadius)} />}
       </div>
       {el.type === "line" && <SelectProp name="dash" label="Style" value={el.dash ?? "solid"} options={[{ value: "solid", label: "Solid" }, { value: "dashed", label: "Dashed" }, { value: "dotted", label: "Dotted" }]} onChange={(v) => patch("dash", { dash: v === "solid" ? undefined : v })} />}
@@ -506,9 +643,12 @@ function ElementProperties({ el, unit }: { el: LabelElement; unit: LengthUnit })
       {el.type === "barcode" && <BarcodeSection el={el} patch={patch} errors={errors} unit={unit} />}
       {el.type === "qrcode" && <QrSection el={el} patch={patch} errors={errors} />}
       {el.type === "image" && <ImageSection el={el} patch={patch} errors={errors} />}
-      {(el.type === "rect" || el.type === "line") && <ShapeSection el={el} patch={patch} errors={errors} unit={unit} />}
+      {(el.type === "rect" || el.type === "line" || el.type === "shape" || el.type === "drawing") && <ShapeSection el={el} patch={patch} errors={errors} unit={unit} />}
       <Section id="visibility" title="Conditional visibility">
         <ConditionEditor el={el} patch={patch} {...errorProp(errors.condition)} />
+      </Section>
+      <Section id="style-rules" title="Conditional style">
+        <StyleRulesEditor el={el} patch={patch} errors={errors} unit={unit} />
       </Section>
     </div>
   );

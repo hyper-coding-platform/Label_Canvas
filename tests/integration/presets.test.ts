@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { inferDataSchema } from "../../src/core/binding/infer-schema";
 import { convertLength } from "../../src/core/geometry/units";
-import { cloneTemplate, createPresetRegistry, getPresetSizes, getPresetTemplate, getPresetTemplates } from "../../src/core/presets/registry";
+import { createPresetRegistry, getPresetSizes, getPresetTemplate, getPresetTemplates } from "../../src/core/presets/registry";
+import { cloneTemplate } from "../../src/core/validation/clone-template";
 import { renderLabel } from "../../src/core/render/render-label";
 import { renderNodeToSvgString } from "../../src/core/render/svg-serializer";
 import { validateTemplate } from "../../src/core/validation/validate-template";

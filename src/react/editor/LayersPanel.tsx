@@ -4,7 +4,7 @@ import { shallowArrayEqual, useEditorSelector } from "../headless/hooks";
 import { useEditorContext } from "./context";
 import { Icon } from "./icons";
 
-const TYPE_LABEL: Record<LabelElement["type"], string> = { text: "Text", barcode: "Barcode", qrcode: "QR code", image: "Image", rect: "Rectangle", line: "Line" };
+const TYPE_LABEL: Record<LabelElement["type"], string> = { text: "Text", barcode: "Barcode", qrcode: "QR code", image: "Image", rect: "Rectangle", line: "Line", shape: "Shape", drawing: "Drawing" };
 
 export function elementDisplayName(el: LabelElement): string {
   if (el.name) return el.name;
@@ -15,6 +15,7 @@ export function elementDisplayName(el: LabelElement): string {
   }
   if (el.type === "barcode") return `${el.format.toUpperCase()} ${el.value.kind === "field" ? `{${el.value.path}}` : el.value.value}`;
   if (el.type === "qrcode") return `QR ${el.value.kind === "field" ? `{${el.value.path}}` : ""}`.trim();
+  if (el.type === "shape") return `${el.shape.charAt(0).toUpperCase()}${el.shape.slice(1)}`;
   return TYPE_LABEL[el.type];
 }
 

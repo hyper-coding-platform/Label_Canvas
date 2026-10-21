@@ -6,6 +6,7 @@ const PROP_NAMES: Readonly<Record<string, string>> = {
   "stroke-width": "strokeWidth",
   "stroke-dasharray": "strokeDasharray",
   "stroke-linecap": "strokeLinecap",
+  "stroke-linejoin": "strokeLinejoin",
   "fill-rule": "fillRule",
   "fill-opacity": "fillOpacity",
   "clip-path": "clipPath",

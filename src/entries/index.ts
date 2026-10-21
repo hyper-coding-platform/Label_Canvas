@@ -7,6 +7,7 @@
 export * from "./core";
 export * from "./renderer";
 export * from "./headless";
+export * from "./presets";
 export { LabelEditor, BarcodeEditor } from "../react/editor/LabelEditor";
 export type { LabelEditorProps } from "../react/editor/LabelEditor";
 export type { EditorUiConfig } from "../react/editor/config";

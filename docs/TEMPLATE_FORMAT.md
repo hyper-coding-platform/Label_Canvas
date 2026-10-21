@@ -84,7 +84,7 @@ Colours: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa` or `transparent`.
 | Property | Type | Rules |
 | --- | --- | --- |
 | `id` | string | Same pattern as the template id; unique within the template. |
-| `type` | `text \| barcode \| qrcode \| image \| rect \| line` | Unknown types are errors. |
+| `type` | `text \| barcode \| qrcode \| image \| rect \| line \| shape \| drawing` | Unknown types are errors. |
 | `name` | string | Layer name shown in the editor. |
 | `x`, `y` | number | Finite. |
 | `width`, `height` | number | > 0. |
@@ -92,6 +92,7 @@ Colours: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa` or `transparent`.
 | `visible` | boolean | Default true. Hidden elements are neither rendered nor printed. |
 | `locked` | boolean | Locked elements can be selected but not moved or resized in the editor. |
 | `condition` | Condition | The element renders only when the condition holds for the record ([DATA_BINDING.md](DATA_BINDING.md)). |
+| `styleRules` | StyleRule[] | ≤ 16 `{ when: Condition, set: StyleOverride }` rules that change the element's appearance per record ([DATA_BINDING.md](DATA_BINDING.md#conditional-styles)). |
 
 Bounds: an element that extends past the canvas produces the warning `ELEMENT_EXCEEDS_CANVAS`
 (it is clipped). One lying entirely outside produces the warning `ELEMENT_OUTSIDE_CANVAS`.
@@ -131,6 +132,15 @@ type, or an https URL allowed by the host `ImagePolicy`), `fit?` (`contain` defa
 `dashed`, `dotted`). The line is drawn horizontally through the box's vertical centre; use
 `rotation` for other angles.
 
+**`shape`**: `shape` (required: `ellipse`, `triangle`, `diamond`, `pentagon`, `hexagon`,
+`octagon`, `star`, `arrow`), `fill?`, `stroke?`, `strokeWidth?` (≥ 0, ≤ half the shorter side;
+default 0 = no outline). The outline is stretched to fill the box, inset by half the stroke.
+
+**`drawing`**: a freehand (pencil) stroke. `points` (required: flat `[x0, y0, x1, y1, …]`,
+2–2000 points, every coordinate in `[0, 1]` relative to the box inset by half the stroke),
+`strokeWidth` (required, > 0, ≤ the shorter side), `stroke?`. It is drawn as a smoothed path
+with round caps and joins. Because points are relative, resizing the box scales the drawing.
+
 ## Value sources
 
 ```json
@@ -153,7 +163,8 @@ Errors (the template is rejected): `NOT_OBJECT`, `TYPE_MISMATCH`, `REQUIRED_PROP
 `CANVAS_TOO_LARGE`, `CANVAS_TOO_SMALL`, `TOO_MANY_ELEMENTS`, `TOO_MANY_TAGS`,
 `ELEMENT_TYPE_UNKNOWN`, `ELEMENT_ID_DUPLICATE`, `ROTATION_INVALID`, `ELEMENT_FAR_OUT_OF_BOUNDS`,
 `BINDING_PATH_INVALID`, `BINDING_PATH_FORBIDDEN`, `FORMAT_INVALID`, `LOCALE_INVALID`,
-`CONDITION_INVALID`, `CONDITION_TOO_DEEP`, `CONDITION_TOO_COMPLEX`,
+`CONDITION_INVALID`, `CONDITION_TOO_DEEP`, `CONDITION_TOO_COMPLEX`, `TOO_MANY_STYLE_RULES`,
+`DRAWING_POINTS_INVALID`,
 `BARCODE_FORMAT_UNSUPPORTED`, `BARCODE_VALUE_INVALID`, `IMAGE_SOURCE_INVALID`,
 `IMAGE_URL_NOT_ALLOWED`, `IMAGE_TOO_LARGE`, `IMAGE_CONTENT_MISMATCH`, `TEMPLATE_TOO_LARGE`,
 `JSON_INVALID`, `MIGRATION_FAILED`.

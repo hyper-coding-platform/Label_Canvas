@@ -108,6 +108,47 @@ Declarative conditions control element visibility per record:
 | `contains` / `startsWith` | Case-sensitive string tests. |
 | `all` / `any` / `not` | Combinators: at most 4 levels deep and 64 nodes. |
 
+## Conditional styles
+
+`condition` decides **whether** an element is drawn. `styleRules` decide **how** it looks for
+each record. Each rule pairs a condition (same operators as above) with a flat set of
+appearance overrides. Rules are evaluated in order, and when several match, later rules win key
+by key.
+
+Example: a size strip where the size that applies to the record is highlighted. Use one text
+box per size, each with one rule:
+
+```json
+{
+  "id": "size-M", "type": "text", "x": 13, "y": 2, "width": 10, "height": 6,
+  "content": { "kind": "static", "value": "M" },
+  "style": { "fontFamily": "sans", "fontSize": 9, "align": "center", "verticalAlign": "middle" },
+  "border": { "width": 0.2, "color": "#000000" },
+  "styleRules": [
+    { "when": { "field": "variant.size", "op": "eq", "value": "M" },
+      "set": { "fill": "#000000", "color": "#ffffff", "fontWeight": "bold" } }
+  ]
+}
+```
+
+The same pattern covers other cases: a red border when `stock.qty` is `lt 5`, a dimmed logo
+(`opacity: 0.3`) for clearance items, a bold price when `pricing.offerPrice` `exists`, or an
+`any` of several fits.
+
+| Key | Applies to | Effect |
+| --- | --- | --- |
+| `fill` | text, barcode, qrcode, rect, shape | Text/barcode/QR background; rect/shape fill. |
+| `color` | text, barcode, qrcode | Text colour; bar colour. |
+| `stroke` | text, rect, shape, line, drawing | Border or stroke colour. Setting it on an element without a stroke adds a 0.75 pt hairline. |
+| `strokeWidth` | text, rect, shape, line, drawing | Template units, same limits as the element's own stroke. `0` removes a text border. |
+| `opacity` | all | 0–1, applied to the whole element. |
+| `fontWeight`, `fontStyle`, `fontSize` | text | As in `TextStyle`. A smaller `fontSize` also lowers `minFontSize`. |
+
+Keys that do not apply to the element type are validation errors (`UNKNOWN_PROPERTY`), so a
+mistyped rule never silently does nothing. Each element can have at most 16 rules
+(`limits.maxStyleRules`). Rule conditions count as bindings for `getTemplateFieldPaths` and
+schema checks. In the editor, use **Conditional style → Add style rule** in the properties panel.
+
 ## Escaping
 
 Bound text reaches output only through escaping: the SVG serializer escapes `& < > " '` and

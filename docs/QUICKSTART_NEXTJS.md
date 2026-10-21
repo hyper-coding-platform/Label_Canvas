@@ -93,7 +93,8 @@ export default function LabelsPage() {
 Optional: render labels as SVG on the server. Create **`app/api/label-svg/route.ts`**:
 
 ```ts
-import { getPresetTemplate, renderLabel, renderNodeToSvgString } from "@your-org/erp-label-studio/core";
+import { renderLabel, renderNodeToSvgString } from "@your-org/erp-label-studio/core";
+import { getPresetTemplate } from "@your-org/erp-label-studio/presets";
 
 export function GET() {
   const template = getPresetTemplate("textile-hang-tag")!;

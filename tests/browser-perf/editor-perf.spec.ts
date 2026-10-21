@@ -46,10 +46,23 @@ for (const n of [100, 500, 1000]) {
     const e1 = await read();
     const editTaskMs = e1.task - e0.task;
 
-    results[n] = { startupMs, perMoveScriptMs: +perMoveScriptMs.toFixed(2), perMoveTaskMs: +perMoveTaskMs.toFixed(2), perMoveStyleMs: +perMoveStyleMs.toFixed(2), perMoveLayoutMs: +perMoveLayoutMs.toFixed(2), editTaskMs: +editTaskMs.toFixed(1), heapMb: +after.heapMb.toFixed(1) };
+    // Hand tool: pan the view through 60 pointer moves (starting over an element). Only the
+    // stage transform, overlays and rulers update; the label tree is memoized on zoom, not pan.
+    await page.keyboard.press("h");
+    await page.mouse.move(sx, sy);
+    await page.mouse.down();
+    const p0 = await read();
+    for (let i = 1; i <= 60; i += 1) await page.mouse.move(sx - i * 3, sy - i * 2);
+    const p1 = await read();
+    await page.mouse.up();
+    const perPanMoveTaskMs = (p1.task - p0.task) / 60;
+    const perPanMoveScriptMs = (p1.script - p0.script) / 60;
+
+    results[n] = { startupMs, perMoveScriptMs: +perMoveScriptMs.toFixed(2), perMoveTaskMs: +perMoveTaskMs.toFixed(2), perMoveStyleMs: +perMoveStyleMs.toFixed(2), perMoveLayoutMs: +perMoveLayoutMs.toFixed(2), editTaskMs: +editTaskMs.toFixed(1), perPanMoveScriptMs: +perPanMoveScriptMs.toFixed(2), perPanMoveTaskMs: +perPanMoveTaskMs.toFixed(2), heapMb: +after.heapMb.toFixed(1) };
     console.log(`${n} elements:`, results[n]);
     // Generous ceilings for shared CI; precise numbers are recorded in PERFORMANCE.md.
     expect(perMoveTaskMs).toBeLessThan(n <= 100 ? 16 : 50);
+    expect(perPanMoveTaskMs).toBeLessThan(n <= 100 ? 16 : 50);
   });
 }
 

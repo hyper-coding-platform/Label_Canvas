@@ -31,3 +31,25 @@ First implementation, not yet published.
   shortcuts, theme tokens, layout config, component slots, controlled and uncontrolled modes.
 * Headless API (`/headless`) and renderer-only entry (`/renderer`).
 * Next.js App Router example with Ant Design slots and API-backed persistence.
+* Conditional styles: `styleRules` on every element (`when` condition + `set` overrides for
+  fill, colour, stroke, stroke width, opacity and text weight/style/size), with
+  `applyStyleRules` and `STYLE_OVERRIDE_KEYS` in `/core` and a **Conditional style** section
+  in the editor's properties panel.
+* `shape` element (ellipse, triangle, diamond, pentagon, hexagon, octagon, star, arrow;
+  `SHAPE_KINDS`) and `drawing` element (freehand strokes), with an **Add shape** button, a
+  **Pencil** tool (`EditorSettings.tool`) and `createDrawingElement` in `/headless`.
+* New limits `maxStyleRules` (16) and `maxDrawingPoints` (2,000); new issue codes
+  `TOO_MANY_STYLE_RULES` and `DRAWING_POINTS_INVALID`.
+* **Cursor** and **Hand** canvas tools (`EditorSettings.tool`: `"select" | "hand" | "pencil"`,
+  type `EditorTool`). Hand pans the view by mouse, touch or pen, with arrow keys, or with V/H
+  and Escape to switch, and it never changes the template, history or dirty state. `panBy` is in
+  `/headless`.
+* `@your-org/erp-label-studio/presets` entry: the built-in sizes and templates
+  (`getPresetSizes`, `getPresetTemplates`, `getPresetTemplate`, `createPresetRegistry`).
+
+### Changed (before first publish)
+
+* **`/core` no longer exports the preset catalog**, which keeps it within its size budget.
+  Migrate `import { getPresetTemplate } from "@your-org/erp-label-studio/core"` to
+  `"@your-org/erp-label-studio/presets"`. The root entry still re-exports the presets, and
+  `cloneTemplate` remains in `/core`.

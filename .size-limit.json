@@ -1,6 +1,7 @@
 [
-  { "name": "core (all exports) — EXCEPTION: budget 35 kB, see docs/PERFORMANCE.md", "path": "dist/core.js", "import": "*", "limit": "37 kB" },
+  { "name": "core (all exports)", "path": "dist/core.js", "import": "*", "limit": "35 kB" },
   { "name": "core: render-only import", "path": "dist/core.js", "import": "{ renderLabel, renderNodeToSvgString }", "limit": "30 kB" },
+  { "name": "presets (all exports; includes the validation it needs)", "path": "dist/presets.js", "import": "*", "limit": "25 kB" },
   { "name": "renderer (React excluded)", "path": "dist/renderer.js", "import": "*", "limit": "40 kB", "ignore": ["react", "react-dom"] },
   { "name": "headless (React excluded)", "path": "dist/headless.js", "import": "*", "limit": "45 kB", "ignore": ["react", "react-dom"] },
   { "name": "full editor (React excluded)", "path": "dist/index.js", "import": "*", "limit": "90 kB", "ignore": ["react", "react-dom"] },

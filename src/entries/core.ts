@@ -44,6 +44,9 @@ export type { BarcodeAdapter, BarcodeValidation, EncodedSymbol, LinearSymbol, Ma
 
 // Rendering
 export { renderLabel, prepareTemplate } from "../core/render/render-label";
+export { applyStyleRules, STYLE_OVERRIDE_KEYS } from "../core/render/style-rules";
+export type { StyledElement } from "../core/render/style-rules";
+export { SHAPE_KINDS } from "../core/render/shapes";
 export type { RenderOptions, RenderResult } from "../core/render/render-label";
 export { renderNodeToSvgString } from "../core/render/svg-serializer";
 export type { RenderNode, SvgTag } from "../core/render/nodes";
@@ -51,11 +54,8 @@ export { estimateTextMeasurer } from "../core/render/text-layout";
 export type { TextMeasurer, MeasureFont } from "../core/render/text-layout";
 export type { ImagePolicy } from "../core/render/image-policy";
 
-// Presets
-export { getPresetSizes, getPresetTemplates, getPresetTemplate, createPresetRegistry, cloneTemplate } from "../core/presets/registry";
-export type { PresetRegistry } from "../core/presets/registry";
-export type { PresetSize, PresetCategory } from "../core/presets/sizes";
-export type { PresetTemplate } from "../core/presets/templates";
+// Templates (the preset catalog lives in the /presets entry so that /core stays small)
+export { cloneTemplate } from "../core/validation/clone-template";
 export { inferDataSchema } from "../core/binding/infer-schema";
 export type { InferSchemaOptions } from "../core/binding/infer-schema";
 

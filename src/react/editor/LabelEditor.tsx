@@ -3,6 +3,7 @@ import { defaultBarcodeAdapter } from "../../core/barcode/adapter";
 import { createCachingBarcodeAdapter } from "../../core/barcode/cache";
 import type { BarcodeAdapter } from "../../core/barcode/types";
 import { sampleRecordFromSchema } from "../../core/binding/sample";
+import { panBy } from "../../core/geometry/viewport";
 import { createBlankTemplate } from "../../core/editor/element-factory";
 import type { EditorSettings, EditorStore } from "../../core/editor/editor-store";
 import type { Issue } from "../../core/errors";
@@ -16,7 +17,7 @@ import { useControlledTemplate, useEditorSelector, useEditorStore } from "../hea
 import { resolveUiConfig, type EditorUiConfig } from "./config";
 import { EditorContext, type EditorContextValue, type SaveStatus } from "./context";
 import { EditorCanvas } from "./EditorCanvas";
-import { EditorToolbar } from "./EditorToolbar";
+import { EditorToolbar, setTool } from "./EditorToolbar";
 import { LayersPanel } from "./LayersPanel";
 import { PrintDialog } from "./PrintDialog";
 import { PropertiesPanel } from "./PropertiesPanel";
@@ -294,6 +295,15 @@ function EditorShell(props: LabelEditorProps & { store: EditorStore }) {
       e.preventDefault();
       const n = s.selection.length;
       if (store.dispatch({ type: "removeElements", ids: s.selection }).ok) announce(`${n} element${n === 1 ? "" : "s"} deleted`);
+    } else if (!mod && !e.altKey && (key === "v" || key === "h")) {
+      setTool(store, key === "h" ? "hand" : "select", announce);
+    } else if (e.key === "Escape" && s.settings.tool !== "select") {
+      setTool(store, "select", announce);
+    } else if (e.key.startsWith("Arrow") && s.settings.tool === "hand") {
+      // Keyboard alternative to dragging with the Hand tool: arrows reveal the content in that direction.
+      e.preventDefault();
+      const step = e.shiftKey ? 200 : 50;
+      store.setViewport(panBy(s.viewport, e.key === "ArrowLeft" ? step : e.key === "ArrowRight" ? -step : 0, e.key === "ArrowUp" ? step : e.key === "ArrowDown" ? -step : 0));
     } else if (e.key === "Escape" && s.selection.length) {
       store.select([]);
     } else if (e.key.startsWith("Arrow") && s.selection.length && !readOnly) {
@@ -348,7 +358,7 @@ function EditorShell(props: LabelEditorProps & { store: EditorStore }) {
         {ui.toolbar === "bottom" && <EditorToolbar canvasViewportId={viewportId} />}
         {ui.statusBar && <StatusBar />}
         <p id={helpId} className="els-visually-hidden">
-          Click an element to select it, drag to move, drag handles to resize. Arrow keys move the selection (Shift for larger steps), Delete removes it, Ctrl+Z undoes, Ctrl+Shift+Z redoes, Ctrl+D duplicates. Use the Layers list to select elements with the keyboard and the
+          Click an element to select it, drag to move, drag handles to resize. Arrow keys move the selection (Shift for larger steps), Delete removes it, Ctrl+Z undoes, Ctrl+Shift+Z redoes, Ctrl+D duplicates. Press H for the Hand tool (drag or arrow keys pan the view; hold Space to pan with any tool), V for the Cursor tool, Escape to return to the Cursor. Use the Layers list to select elements with the keyboard and the
           Properties panel to set exact positions and sizes.
         </p>
         <div className="els-visually-hidden" role="status" aria-live="polite" data-testid="els-announcer">

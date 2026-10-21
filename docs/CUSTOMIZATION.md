@@ -43,7 +43,7 @@ CSS variables: `--els-font-family`, `--els-font-size`, `--els-color-bg`, `--els-
   propertiesPanel: "right",  // "left" | "right" | "hidden"
   rulers: true, statusBar: true,
   panelWidth: "280px", minHeight: "480px",
-  elementTypes: ["text", "barcode", "qrcode"],   // toolbar "add" buttons
+  elementTypes: ["text", "barcode", "qrcode"],   // toolbar "add" buttons; "drawing" = pencil tool
   saveButton: true, printButton: true, templateSettings: true,
 }} />
 ```

@@ -2,8 +2,8 @@
  * Post-build steps and checks:
  * 1. Prepend "use client" to React entry files (Next.js client boundary).
  * 2. Copy the scoped stylesheet to dist/styles.css.
- * 3. Fail if the /core import graph references React.
- * 4. Import dist/core.js in plain Node (no DOM globals) as an SSR smoke test.
+ * 3. Fail if the /core or /presets import graph references React.
+ * 4. Import dist/core.js and dist/presets.js in plain Node (no DOM globals) as an SSR smoke test.
  */
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -41,8 +41,11 @@ function visit(file) {
   }
 }
 const coreEntry = join(dist, "core.js");
-if (!existsSync(coreEntry)) fail("dist/core.js is missing.");
-visit(coreEntry);
+const presetsEntry = join(dist, "presets.js");
+for (const entry of [coreEntry, presetsEntry]) {
+  if (!existsSync(entry)) fail(`${entry} is missing.`);
+  visit(entry);
+}
 
 // 4. Node import smoke test (SSR-safety: no window/document at import)
 if (typeof globalThis.window !== "undefined" || typeof globalThis.document !== "undefined") fail("unexpected DOM globals in build environment");
@@ -50,4 +53,6 @@ const core = await import(pathToFileURL(coreEntry).href);
 for (const name of ["validateTemplate", "renderLabel", "renderNodeToSvgString", "parseTemplate"]) {
   if (typeof core[name] !== "function") fail(`dist/core.js does not export ${name}()`);
 }
-console.log(`post-build: OK (core graph: ${seen.size} file(s), no React; Node import succeeded)`);
+const presets = await import(pathToFileURL(presetsEntry).href);
+if (!core.validateTemplate(presets.getPresetTemplate("textile-hang-tag")).valid) fail("dist/presets.js: built-in template does not validate");
+console.log(`post-build: OK (core + presets graph: ${seen.size} file(s), no React; Node import succeeded)`);

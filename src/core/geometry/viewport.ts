@@ -59,6 +59,12 @@ export function fitZoom(
   return clampZoom(Math.min(availW / (label.width * base), availH / (label.height * base)));
 }
 
+/** Move the view by a screen-pixel delta (Hand tool, Space+drag, keyboard). Non-finite deltas are ignored. */
+export function panBy(viewport: Viewport, dx: number, dy: number): Viewport {
+  if (!Number.isFinite(dx) || !Number.isFinite(dy) || (dx === 0 && dy === 0)) return viewport;
+  return { zoom: viewport.zoom, panX: viewport.panX + dx, panY: viewport.panY + dy };
+}
+
 /** Zoom around a fixed screen point (e.g. the cursor), keeping that label point under it. */
 export function zoomAt(viewport: Viewport, unit: LengthUnit, newZoom: number, anchor: Point): Viewport {
   const zoom = clampZoom(newZoom);
