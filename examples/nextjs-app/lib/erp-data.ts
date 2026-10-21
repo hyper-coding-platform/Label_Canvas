@@ -1,6 +1,6 @@
 // Stand-in for the host ERP's own data layer. The label SDK never knows this shape;
 // the host maps it to records and declares the fields in a DataSchema.
-import type { DataSchema } from "@your-org/erp-label-studio/core";
+import type { DataSchema } from "@suriyaprakashm14/erp-label-studio/core";
 
 export interface Product {
   id: string;

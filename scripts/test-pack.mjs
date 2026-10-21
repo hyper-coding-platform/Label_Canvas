@@ -58,14 +58,14 @@ for (const required of ["dist/index.js", "dist/index.d.ts", "dist/core.js", "dis
     process.exit(1);
   }
 }
-copyFileSync(join(packDir, packed.filename), join(packDir, "your-org-erp-label-studio.tgz"));
+copyFileSync(join(packDir, packed.filename), join(packDir, "suriyaprakashm14-erp-label-studio.tgz"));
 if (args.has("--pack-only")) {
-  console.log("\ntest-pack: packed to .pack-test/your-org-erp-label-studio.tgz (--pack-only)");
+  console.log("\ntest-pack: packed to .pack-test/suriyaprakashm14-erp-label-studio.tgz (--pack-only)");
   process.exit(0);
 }
 
 // Clean install of the tarball into the consumer.
-rmSync(join(example, "node_modules", "@your-org"), { recursive: true, force: true });
+rmSync(join(example, "node_modules", "@suriyaprakashm14"), { recursive: true, force: true });
 rmSync(join(example, "package-lock.json"), { force: true });
 rmSync(join(example, ".next"), { recursive: true, force: true });
 run("npm install --no-audit --no-fund", example);
@@ -75,28 +75,28 @@ const probe = join(example, ".probe-exports.mjs");
 writeFileSync(
   probe,
   `
-const core = await import("@your-org/erp-label-studio/core");
+const core = await import("@suriyaprakashm14/erp-label-studio/core");
 for (const n of ["validateTemplate","parseTemplate","renderLabel","renderNodeToSvgString","generateLabels","buildPrintDocument","printLabels","createMemoryTemplateStorage","validateTemplateData","cloneTemplate"]) {
   if (typeof core[n] !== "function") throw new Error("core missing " + n);
 }
 if ("getPresetTemplates" in core) throw new Error("core still exports the preset catalog");
-const presets = await import("@your-org/erp-label-studio/presets");
+const presets = await import("@suriyaprakashm14/erp-label-studio/presets");
 for (const n of ["getPresetSizes","getPresetTemplates","getPresetTemplate","createPresetRegistry"]) {
   if (typeof presets[n] !== "function") throw new Error("presets missing " + n);
 }
 const t = presets.getPresetTemplate("textile-hang-tag");
 const r = core.renderLabel(t, { store:{name:"S"}, product:{ name:"N", barcode:"260042130115" }, pricing:{ mrp: 1 } });
 if (!r.ok) throw new Error("render failed: " + JSON.stringify(r.issues));
-const main = await import("@your-org/erp-label-studio");
+const main = await import("@suriyaprakashm14/erp-label-studio");
 for (const n of ["LabelEditor","BarcodeEditor","LabelRenderer","BarcodePreview","useEditorStore","validateTemplate","generateLabels","printLabels","getPresetSizes","getPresetTemplates"]) {
   if (typeof main[n] !== "function") throw new Error("main missing " + n);
 }
-const renderer = await import("@your-org/erp-label-studio/renderer");
+const renderer = await import("@suriyaprakashm14/erp-label-studio/renderer");
 if (typeof renderer.LabelRenderer !== "function") throw new Error("renderer missing LabelRenderer");
-const headless = await import("@your-org/erp-label-studio/headless");
+const headless = await import("@suriyaprakashm14/erp-label-studio/headless");
 if (typeof headless.useEditorStore !== "function") throw new Error("headless missing useEditorStore");
-import.meta.resolve("@your-org/erp-label-studio/styles.css");
-for (const internal of ["@your-org/erp-label-studio/dist/core.js", "@your-org/erp-label-studio/src/entries/core"]) {
+import.meta.resolve("@suriyaprakashm14/erp-label-studio/styles.css");
+for (const internal of ["@suriyaprakashm14/erp-label-studio/dist/core.js", "@suriyaprakashm14/erp-label-studio/src/entries/core"]) {
   try { await import(internal); throw new Error("internal path importable: " + internal); }
   catch (e) { if (e.code !== "ERR_PACKAGE_PATH_NOT_EXPORTED") throw e; }
 }

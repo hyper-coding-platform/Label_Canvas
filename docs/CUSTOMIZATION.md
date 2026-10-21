@@ -56,7 +56,7 @@ Replace primitives with your design system's components:
 
 ```tsx
 import { Button, Select } from "antd";
-import type { ButtonSlotProps, SelectSlotProps } from "@your-org/erp-label-studio";
+import type { ButtonSlotProps, SelectSlotProps } from "@suriyaprakashm14/erp-label-studio";
 
 function AntButton({ setElement, ...p }: ButtonSlotProps) {
   return (
@@ -97,7 +97,7 @@ Contract for slot implementations:
 ## Headless
 
 ```tsx
-import { useEditorStore, useEditorSelector, useEditorCommands, LabelRenderer } from "@your-org/erp-label-studio/headless";
+import { useEditorStore, useEditorSelector, useEditorCommands, LabelRenderer } from "@suriyaprakashm14/erp-label-studio/headless";
 
 function MyBuilder({ initial }) {
   const store = useEditorStore(initial);

@@ -24,17 +24,20 @@
       "node"
     ],
     "paths": {
-      "@your-org/erp-label-studio": [
+      "@suriyaprakashm14/erp-label-studio": [
         "./src/entries/index.ts"
       ],
-      "@your-org/erp-label-studio/core": [
+      "@suriyaprakashm14/erp-label-studio/core": [
         "./src/entries/core.ts"
       ],
-      "@your-org/erp-label-studio/renderer": [
+      "@suriyaprakashm14/erp-label-studio/renderer": [
         "./src/entries/renderer.ts"
       ],
-      "@your-org/erp-label-studio/headless": [
+      "@suriyaprakashm14/erp-label-studio/headless": [
         "./src/entries/headless.ts"
+      ],
+      "@suriyaprakashm14/erp-label-studio/presets": [
+        "./src/entries/presets.ts"
       ]
     }
   },

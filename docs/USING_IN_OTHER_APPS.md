@@ -1,14 +1,13 @@
 # Using the SDK in Other Applications
 
-This guide covers getting `@your-org/erp-label-studio` into another React, Next.js or Node
+This guide covers getting `@suriyaprakashm14/erp-label-studio` into another React, Next.js or Node
 application and confirming that the application still builds correctly.
 
 * What the package does internally: [IMPLEMENTATION.md](IMPLEMENTATION.md).
 * Every export: [API.md](API.md).
 * Next.js specifics in more depth: [NEXTJS_INTEGRATION.md](NEXTJS_INTEGRATION.md).
 
-> **Package name.** `@your-org` is a placeholder scope. The owner picks the real scope before
-> publishing ([RELEASE.md](RELEASE.md)). If the name changes, replace it in every import below.
+> **Package name.** The package is published on npm as `@suriyaprakashm14/erp-label-studio`.
 
 ## 1. What was verified
 
@@ -41,20 +40,20 @@ below, but have not been tested. Treat them as "test in your app first".
 
 ## 3. Getting the package into your app
 
-Choose one of these options. Before the package is published to a registry, **option B (a
-tarball)** is the recommended way, because it is exactly what a registry would deliver.
+Choose one of these options. **Option A (npm)** is the normal way. Option B (a tarball) is for
+unreleased or offline builds and is exactly what the registry delivers.
 
-### A. From a registry (after publication)
+### A. From npm
 
 ```bash
-npm install @your-org/erp-label-studio
+npm install @suriyaprakashm14/erp-label-studio
 ```
 
 For a private registry (GitHub Packages, Verdaccio, Artifactory, Azure Artifacts), add the
 scope to the consuming app's `.npmrc`:
 
 ```ini
-@your-org:registry=https://npm.your-company.example/
+@your-company:registry=https://npm.your-company.example/
 //npm.your-company.example/:_authToken=${NPM_TOKEN}
 ```
 
@@ -66,22 +65,22 @@ In this repository:
 
 ```bash
 npm ci
-npm run pack:local      # builds, checks, and writes .pack-test/your-org-erp-label-studio.tgz
+npm run pack:local      # builds, checks, and writes .pack-test/suriyaprakashm14-erp-label-studio.tgz
 ```
 
 Copy the tarball into the other app with the version in its name, so upgrades are explicit:
 
 ```bash
 mkdir -p vendor
-cp ../Label_Canvas/.pack-test/your-org-erp-label-studio-0.1.0.tgz vendor/
-npm install ./vendor/your-org-erp-label-studio-0.1.0.tgz
+cp ../Label_Canvas/.pack-test/suriyaprakashm14-erp-label-studio-0.1.0.tgz vendor/
+npm install ./vendor/suriyaprakashm14-erp-label-studio-0.1.0.tgz
 ```
 
 `package.json` in the other app then contains:
 
 ```json
 "dependencies": {
-  "@your-org/erp-label-studio": "file:vendor/your-org-erp-label-studio-0.1.0.tgz"
+  "@suriyaprakashm14/erp-label-studio": "file:vendor/suriyaprakashm14-erp-label-studio-0.1.0.tgz"
 }
 ```
 
@@ -95,7 +94,7 @@ integrity hash in the lockfile, so overwriting a tarball under the same name cau
 ### C. Monorepo workspace
 
 If the other app lives in the same npm/pnpm/Yarn workspace, add this repo as a workspace
-package and depend on it with `"@your-org/erp-label-studio": "*"` (npm) or `"workspace:*"`
+package and depend on it with `"@suriyaprakashm14/erp-label-studio": "*"` (npm) or `"workspace:*"`
 (pnpm/Yarn). Two rules:
 
 1. **Build first.** Consumers read `dist/`, which is not committed. Run `npm run build` in
@@ -134,12 +133,12 @@ The rules are the same everywhere:
 
 | Entry | Contents | Where to import it |
 | --- | --- | --- |
-| `@your-org/erp-label-studio` | Editor + everything below | Client components only |
-| `@your-org/erp-label-studio/renderer` | `LabelRenderer`, `BarcodePreview` (no editor code) | Client components only |
-| `@your-org/erp-label-studio/headless` | Hooks for your own editor UI | Client components only |
-| `@your-org/erp-label-studio/core` | Validate, render SVG, batch, print, storage | Anywhere |
-| `@your-org/erp-label-studio/presets` | Built-in sizes and industry templates | Anywhere |
-| `@your-org/erp-label-studio/styles.css` | Scoped styles (`.els-root`, `.els-preview`) | Once at the root |
+| `@suriyaprakashm14/erp-label-studio` | Editor + everything below | Client components only |
+| `@suriyaprakashm14/erp-label-studio/renderer` | `LabelRenderer`, `BarcodePreview` (no editor code) | Client components only |
+| `@suriyaprakashm14/erp-label-studio/headless` | Hooks for your own editor UI | Client components only |
+| `@suriyaprakashm14/erp-label-studio/core` | Validate, render SVG, batch, print, storage | Anywhere |
+| `@suriyaprakashm14/erp-label-studio/presets` | Built-in sizes and industry templates | Anywhere |
+| `@suriyaprakashm14/erp-label-studio/styles.css` | Scoped styles (`.els-root`, `.els-preview`) | Once at the root |
 
 Import only from these paths. Deep imports such as `…/dist/core.js` are blocked by the
 `exports` map and fail with `ERR_PACKAGE_PATH_NOT_EXPORTED`.
@@ -148,13 +147,13 @@ Import only from these paths. Deep imports such as `…/dist/core.js` are blocke
 
 ```tsx
 // app/layout.tsx
-import "@your-org/erp-label-studio/styles.css";
+import "@suriyaprakashm14/erp-label-studio/styles.css";
 ```
 
 ```tsx
 // app/labels/label-designer.tsx
 "use client";
-import { LabelEditor, getPresetTemplate } from "@your-org/erp-label-studio";
+import { LabelEditor, getPresetTemplate } from "@suriyaprakashm14/erp-label-studio";
 
 export function LabelDesigner() {
   return (
@@ -188,8 +187,8 @@ const LabelDesigner = dynamic(() => import("../components/label-designer").then(
 
 ```tsx
 // src/main.tsx
-import "@your-org/erp-label-studio/styles.css";
-import { LabelEditor } from "@your-org/erp-label-studio";
+import "@suriyaprakashm14/erp-label-studio/styles.css";
+import { LabelEditor } from "@suriyaprakashm14/erp-label-studio";
 ```
 
 No Vite configuration is needed. `@vitejs/plugin-react` is enough.
@@ -209,7 +208,7 @@ actions.
 ### Node server, CLI or worker (verified for ESM)
 
 ```js
-import { parseTemplate, renderLabel, renderNodeToSvgString, generateLabels } from "@your-org/erp-label-studio/core";
+import { parseTemplate, renderLabel, renderNodeToSvgString, generateLabels } from "@suriyaprakashm14/erp-label-studio/core";
 
 const parsed = parseTemplate(jsonFromDb);
 if (!parsed.ok) throw new Error(JSON.stringify(parsed.issues));
@@ -218,7 +217,7 @@ const svg = result.ok ? renderNodeToSvgString(result.root) : null;
 ```
 
 * `/core` does not need React installed.
-* In a CommonJS project on Node ≥ 20.19, `require("@your-org/erp-label-studio/core")` works.
+* In a CommonJS project on Node ≥ 20.19, `require("@suriyaprakashm14/erp-label-studio/core")` works.
   On older Node versions, use `await import(…)`.
 * `printLabels` is browser-only and throws `PRINT_UNAVAILABLE` on the server. Use
   `buildPrintDocument` or `generateLabels` there instead.
@@ -227,7 +226,7 @@ const svg = result.ok ? renderNodeToSvgString(result.root) : null;
 
 ```ts
 // label-worker.ts
-import { generateLabels } from "@your-org/erp-label-studio/core";
+import { generateLabels } from "@suriyaprakashm14/erp-label-studio/core";
 self.onmessage = async ({ data: { template, records } }) => {
   for await (const label of generateLabels(template, records)) self.postMessage(label);
 };
@@ -252,7 +251,7 @@ Type declarations ship with the package. No `@types` package is needed.
 ```
 
 * With `"moduleResolution": "node"`, TypeScript reports *Cannot find module
-  '@your-org/erp-label-studio/core'… Consider updating to 'node16', 'nodenext', or
+  '@suriyaprakashm14/erp-label-studio/core'… Consider updating to 'node16', 'nodenext', or
   'bundler'*. Change the setting. Next.js and Vite templates already use `bundler`.
 * `strict`, `exactOptionalPropertyTypes` and `skipLibCheck: false` are all compatible with
   the shipped types, and none of them are required.
@@ -266,11 +265,11 @@ Run these in the **consuming app** after installing or upgrading the SDK.
 ### Step 1: install and resolve
 
 ```bash
-npm ls @your-org/erp-label-studio react react-dom
+npm ls @suriyaprakashm14/erp-label-studio react react-dom
 ```
 
 You should see **one** `react` and **one** `react-dom` (deduped). A second copy listed under
-`@your-org/erp-label-studio/node_modules` means the install was linked rather than packed
+`@suriyaprakashm14/erp-label-studio/node_modules` means the install was linked rather than packed
 (see §3D).
 
 ### Step 2: entry points resolve
@@ -279,16 +278,16 @@ Save as `scripts/check-label-sdk.mjs` in the consuming app and run it with
 `node scripts/check-label-sdk.mjs`:
 
 ```js
-const core = await import("@your-org/erp-label-studio/core");
-const presets = await import("@your-org/erp-label-studio/presets");
+const core = await import("@suriyaprakashm14/erp-label-studio/core");
+const presets = await import("@suriyaprakashm14/erp-label-studio/presets");
 const t = presets.getPresetTemplate("textile-hang-tag");
 const r = core.renderLabel(t, { store: { name: "S" }, product: { name: "N", barcode: "260042130115" }, pricing: { mrp: 1 } });
 if (!r.ok) throw new Error("render failed: " + JSON.stringify(r.issues));
 console.log("core OK, svg bytes:", core.renderNodeToSvgString(r.root).length);
 
-const main = await import("@your-org/erp-label-studio");          // needs react + react-dom installed
+const main = await import("@suriyaprakashm14/erp-label-studio");          // needs react + react-dom installed
 if (typeof main.LabelEditor !== "function") throw new Error("LabelEditor missing");
-import.meta.resolve("@your-org/erp-label-studio/styles.css");
+import.meta.resolve("@suriyaprakashm14/erp-label-studio/styles.css");
 console.log("entries OK");
 ```
 
@@ -348,13 +347,13 @@ the editor code is never loaded. Current budgets: [PERFORMANCE.md](PERFORMANCE.m
 
 | Symptom | Fix |
 | --- | --- |
-| `Cannot find module '@your-org/erp-label-studio/core'` in TypeScript only | Set `moduleResolution` to `bundler`, `node16` or `nodenext` (§5) |
+| `Cannot find module '@suriyaprakashm14/erp-label-studio/core'` in TypeScript only | Set `moduleResolution` to `bundler`, `node16` or `nodenext` (§5) |
 | `Module not found` at build time for every entry | `dist/` missing: a git or folder install without a build (§3C–E). Use a tarball |
 | "Invalid hook call" / two Reacts | Install from a tarball or registry, or dedupe React (§3D) |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` | A deep import. Use only the five documented entry paths |
 | `ERR_REQUIRE_ESM` | Node < 20.19 with `require`. Upgrade Node or use `import()` |
 | "You're importing a component that needs useState" | An editor or renderer component used in a server component. Move it into a `"use client"` file |
 | `EINTEGRITY` after replacing a tarball | Give each tarball a new version and file name, then reinstall (§3B) |
-| Jest: `SyntaxError: Cannot use import statement outside a module` | Jest does not transform `node_modules` ESM by default. Prefer Vitest, or configure Jest for ESM (`transformIgnorePatterns` excluding `@your-org/erp-label-studio`). Not verified |
+| Jest: `SyntaxError: Cannot use import statement outside a module` | Jest does not transform `node_modules` ESM by default. Prefer Vitest, or configure Jest for ESM (`transformIgnorePatterns` excluding `@suriyaprakashm14/erp-label-studio`). Not verified |
 
 More: [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

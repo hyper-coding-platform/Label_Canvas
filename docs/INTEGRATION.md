@@ -33,8 +33,8 @@ Verified in real browsers (`tests/browser/editor.spec.ts`, `tests/nextjs/nextjs.
 
 ```tsx
 "use client";
-import { LabelEditor } from "@your-org/erp-label-studio";
-import "@your-org/erp-label-studio/styles.css";
+import { LabelEditor } from "@suriyaprakashm14/erp-label-studio";
+import "@suriyaprakashm14/erp-label-studio/styles.css";
 
 <div style={{ height: 640 }}>
   <LabelEditor defaultTemplate={template} dataSchema={schema} sampleData={records} onSave={save} />

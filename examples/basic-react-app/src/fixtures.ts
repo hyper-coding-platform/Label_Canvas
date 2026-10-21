@@ -1,4 +1,4 @@
-import type { DataSchema, LabelTemplate } from "@your-org/erp-label-studio/core";
+import type { DataSchema, LabelTemplate } from "@suriyaprakashm14/erp-label-studio/core";
 
 export const dataSchema: DataSchema = {
   fields: [

@@ -1,5 +1,5 @@
 /**
- * @your-org/erp-label-studio/core
+ * @suriyaprakashm14/erp-label-studio/core
  *
  * Framework-independent engine: no React, no DOM access at import time.
  * Safe to import from server code, workers and Node.js.

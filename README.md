@@ -1,16 +1,16 @@
-# @your-org/erp-label-studio
+# @suriyaprakashm14/erp-label-studio
 
 A label designer, deterministic label renderer and barcode SDK for React and Next.js ERP
 applications. It is built for textile, retail, warehouse, inventory, jewellery and POS
 systems, and makes no assumptions about your data model, backend or UI framework.
 
-> **Status: 0.1.0, not yet released.** Automated gates pass (see
-> [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)). Physical printer and scanner
+> **Status: 0.1.0, first release.** Automated gates pass (see
+> [docs/IMPLEMENTATION_PLAN.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/IMPLEMENTATION_PLAN.md)). Physical printer and scanner
 > validation has **not** been performed yet. Do not claim hardware compatibility until the
-> [physical checklist](docs/PRINTING.md#physical-validation-checklist) is complete.
+> [physical checklist](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/PRINTING.md#physical-validation-checklist) is complete.
 
-> **Adding this to a Next.js app?** Follow [docs/QUICKSTART_NEXTJS.md](docs/QUICKSTART_NEXTJS.md):
-> install the release `.tgz`, add 3 files, and test (about 10 minutes).
+> **Adding this to a Next.js app?** Follow [docs/QUICKSTART_NEXTJS.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/QUICKSTART_NEXTJS.md):
+> install the package, add 3 files, and test (about 10 minutes).
 
 ## What you get
 
@@ -49,22 +49,22 @@ systems, and makes no assumptions about your data model, backend or UI framework
 ## Install
 
 ```bash
-npm install @your-org/erp-label-studio
+npm install @suriyaprakashm14/erp-label-studio
 ```
 
-Before the package is published, install it from a packed tarball (`npm run pack:local`).
-See [docs/USING_IN_OTHER_APPS.md](docs/USING_IN_OTHER_APPS.md) for every install option,
+To try an unreleased build, install a packed tarball instead (`npm run pack:local`).
+See [docs/USING_IN_OTHER_APPS.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/USING_IN_OTHER_APPS.md) for every install option,
 bundler setup, TypeScript settings and a checklist to confirm your app still builds.
 
 ```tsx
-import "@your-org/erp-label-studio/styles.css"; // once, for example in app/layout.tsx
+import "@suriyaprakashm14/erp-label-studio/styles.css"; // once, for example in app/layout.tsx
 ```
 
 ## Editor
 
 ```tsx
 "use client";
-import { LabelEditor, getPresetTemplate, type LabelTemplate, type DataSchema } from "@your-org/erp-label-studio";
+import { LabelEditor, getPresetTemplate, type LabelTemplate, type DataSchema } from "@suriyaprakashm14/erp-label-studio";
 
 const schema: DataSchema = {
   fields: [
@@ -91,20 +91,20 @@ Controlled mode: `template={t} onTemplateChange={setT}`. Theming:
 `theme={{ colorAccent: "#0f3d3e", fontFamily: "inherit" }}`. Your own controls:
 `components={{ Button: MyButton, Select: MySelect }}`. Layout:
 `ui={{ layersPanel: "hidden", toolbar: "bottom" }}`.
-See [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
+See [docs/CUSTOMIZATION.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/CUSTOMIZATION.md).
 
 ## Renderer only (no editor code loaded)
 
 ```tsx
 "use client";
-import { LabelRenderer } from "@your-org/erp-label-studio/renderer";
+import { LabelRenderer } from "@suriyaprakashm14/erp-label-studio/renderer";
 <LabelRenderer template={template} data={record} />;   // physical size, e.g. 50mm × 75mm
 ```
 
 On the server, or with no React at all:
 
 ```ts
-import { renderLabel, renderNodeToSvgString } from "@your-org/erp-label-studio/core";
+import { renderLabel, renderNodeToSvgString } from "@suriyaprakashm14/erp-label-studio/core";
 const result = renderLabel(template, record);
 if (result.ok) svg = renderNodeToSvgString(result.root);
 else console.warn(result.issues); // e.g. BARCODE_VALUE_MISSING: no barcode is generated
@@ -113,7 +113,7 @@ else console.warn(result.issues); // e.g. BARCODE_VALUE_MISSING: no barcode is g
 ## Templates and saving
 
 ```ts
-import { parseTemplate, serializeTemplate, validateTemplate } from "@your-org/erp-label-studio/core";
+import { parseTemplate, serializeTemplate, validateTemplate } from "@suriyaprakashm14/erp-label-studio/core";
 const parsed = parseTemplate(untrustedJson);   // size check → migrate → validate
 if (!parsed.ok) showErrors(parsed.issues);
 const json = serializeTemplate(template);      // store this
@@ -122,13 +122,13 @@ const json = serializeTemplate(template);      // store this
 Wire persistence through `onSave`, or implement `TemplateStorage` over your API and use
 `useTemplateStorage(storage, id)`. It handles loading and error states, and revision checks
 that reject concurrent overwrites. Validate again on your server.
-See [docs/INTEGRATION.md](docs/INTEGRATION.md).
+See [docs/INTEGRATION.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/INTEGRATION.md).
 
 ## Bulk generation and printing
 
 ```ts
-import { generateLabels, printLabels } from "@your-org/erp-label-studio/core";
-import { getPresetSizes } from "@your-org/erp-label-studio/presets";
+import { generateLabels, printLabels } from "@suriyaprakashm14/erp-label-studio/core";
+import { getPresetSizes } from "@suriyaprakashm14/erp-label-studio/presets";
 
 for await (const label of generateLabels(template, productsAsyncIterable, { signal, onProgress })) {
   if (label.ok) archive(label.svg!); else report(label.index, label.issues);
@@ -159,24 +159,24 @@ document.skipped; // records not printed (invalid or missing data)
 
 | Topic | |
 | --- | --- |
-| Quick start for Next.js apps | [docs/QUICKSTART_NEXTJS.md](docs/QUICKSTART_NEXTJS.md) |
-| Using the SDK in another app (install, build check) | [docs/USING_IN_OTHER_APPS.md](docs/USING_IN_OTHER_APPS.md) |
-| How it is implemented | [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) |
-| API reference | [docs/API.md](docs/API.md) |
-| Template format | [docs/TEMPLATE_FORMAT.md](docs/TEMPLATE_FORMAT.md) |
-| Data binding | [docs/DATA_BINDING.md](docs/DATA_BINDING.md) |
-| Barcodes | [docs/BARCODES.md](docs/BARCODES.md) |
-| Printing and calibration | [docs/PRINTING.md](docs/PRINTING.md) |
-| Embedding in an ERP and persistence | [docs/INTEGRATION.md](docs/INTEGRATION.md) |
-| Theme, slots, headless | [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md) |
-| Next.js | [docs/NEXTJS_INTEGRATION.md](docs/NEXTJS_INTEGRATION.md) |
-| Performance (measured) | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
-| Security | [docs/SECURITY.md](docs/SECURITY.md) |
-| Accessibility | [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) |
-| Troubleshooting | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) |
-| Architecture and decisions | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/DECISIONS.md](docs/DECISIONS.md) |
-| Tests and release | [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md), [docs/RELEASE.md](docs/RELEASE.md), [docs/CHANGELOG.md](docs/CHANGELOG.md) |
+| Quick start for Next.js apps | [docs/QUICKSTART_NEXTJS.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/QUICKSTART_NEXTJS.md) |
+| Using the SDK in another app (install, build check) | [docs/USING_IN_OTHER_APPS.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/USING_IN_OTHER_APPS.md) |
+| How it is implemented | [docs/IMPLEMENTATION.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/IMPLEMENTATION.md) |
+| API reference | [docs/API.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/API.md) |
+| Template format | [docs/TEMPLATE_FORMAT.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/TEMPLATE_FORMAT.md) |
+| Data binding | [docs/DATA_BINDING.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/DATA_BINDING.md) |
+| Barcodes | [docs/BARCODES.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/BARCODES.md) |
+| Printing and calibration | [docs/PRINTING.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/PRINTING.md) |
+| Embedding in an ERP and persistence | [docs/INTEGRATION.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/INTEGRATION.md) |
+| Theme, slots, headless | [docs/CUSTOMIZATION.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/CUSTOMIZATION.md) |
+| Next.js | [docs/NEXTJS_INTEGRATION.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/NEXTJS_INTEGRATION.md) |
+| Performance (measured) | [docs/PERFORMANCE.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/PERFORMANCE.md) |
+| Security | [docs/SECURITY.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/SECURITY.md) |
+| Accessibility | [docs/ACCESSIBILITY.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/ACCESSIBILITY.md) |
+| Troubleshooting | [docs/TROUBLESHOOTING.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/TROUBLESHOOTING.md) |
+| Architecture and decisions | [docs/ARCHITECTURE.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/ARCHITECTURE.md), [docs/DECISIONS.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/DECISIONS.md) |
+| Tests and release | [docs/TEST_STRATEGY.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/TEST_STRATEGY.md), [docs/RELEASE.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/RELEASE.md), [docs/CHANGELOG.md](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/docs/CHANGELOG.md) |
 
 ## License
 
-MIT (placeholder; to be confirmed by the owner before publication).
+[MIT](https://github.com/hyper-coding-platform/Label_Canvas/blob/main/LICENSE) © 2026 suriyaprakashm14

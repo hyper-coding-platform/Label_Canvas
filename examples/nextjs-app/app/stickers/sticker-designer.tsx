@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { LabelEditor, useTemplateStorage } from "@your-org/erp-label-studio";
+import { LabelEditor, useTemplateStorage } from "@suriyaprakashm14/erp-label-studio";
 import { createFetchTemplateStorage } from "@/lib/fetch-storage";
 import { PRODUCTS, productSchema, toLabelRecord } from "@/lib/erp-data";
 

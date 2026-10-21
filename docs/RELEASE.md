@@ -44,9 +44,21 @@ bump.
    npm publish --access public     # or --access restricted for a private registry
    ```
 
-## Before the first publish
+## Before the first publish (done 2026-10-22)
 
-* Replace the placeholder scope `@your-org`. Search the repository, examples and docs for it.
-* Confirm the license: MIT is a placeholder chosen during development; the owner decides.
-* Add `repository`, `homepage` and `bugs` fields to `package.json`.
-* Make the README's `docs/…` links absolute (repository URLs): only `docs/CHANGELOG.md` ships in the tarball, so relative links do not resolve on the npm page.
+* [x] Package name `@suriyaprakashm14/erp-label-studio` (npm user scope `suriyaprakashm14`).
+* [x] License: MIT, © 2026 suriyaprakashm14.
+* [x] `author`, `repository`, `homepage` and `bugs` in `package.json`; `publishConfig.access: "public"`
+  (scoped packages are private by default).
+* [x] README links are absolute GitHub URLs (only `docs/CHANGELOG.md` ships in the tarball).
+* [x] `prepublishOnly` (`scripts/prepublish.mjs`) runs `npm run verify`, so `npm publish` cannot upload a failing build (it also works under `npm publish --dry-run`).
+
+## Publishing (owner)
+
+```bash
+npm login                      # once per machine; npm account with 2FA
+npm whoami                     # must print suriyaprakashm14
+npm publish --dry-run          # shows exactly what would be uploaded
+npm publish                    # runs prepublishOnly (verify), asks for the 2FA code
+git tag v0.1.0 && git push origin v0.1.0
+```

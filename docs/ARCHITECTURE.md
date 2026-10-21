@@ -13,7 +13,7 @@ A label design and barcode SDK for React/Next.js ERP applications that is
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ @your-org/erp-label-studio            (default UI, "use client")│
+│ @suriyaprakashm14/erp-label-studio            (default UI, "use client")│
 │   LabelEditor / BarcodeEditor, panels, slots, theme             │
 ├───────────────────────────────────────────────────────────────┤
 │ /headless   useEditorStore, useEditorSelector, useEditorCommands │

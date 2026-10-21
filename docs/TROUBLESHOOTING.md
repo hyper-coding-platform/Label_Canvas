@@ -5,7 +5,7 @@
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | "You're importing a component that needs `useState`…" or a server-component error | Imported the main entry, `/renderer` or `/headless` in a server component and *called* something from it | Render editor and preview components inside a `"use client"` component; use `/core` in server code |
-| Editor looks unstyled | Stylesheet not imported | `import "@your-org/erp-label-studio/styles.css"` once (for example in `app/layout.tsx`) |
+| Editor looks unstyled | Stylesheet not imported | `import "@suriyaprakashm14/erp-label-studio/styles.css"` once (for example in `app/layout.tsx`) |
 | Editor collapses to 480 px or has no height | The container has no height | Give the parent a height, or set `ui={{ minHeight: "70vh" }}` |
 | `ERR_REQUIRE_ESM` / `require() of ES Module` | The package is ESM-only | Use `import` / dynamic `import()`; Node ≥ 20.19 supports `require(esm)` |
 | `ERR_PACKAGE_PATH_NOT_EXPORTED` | Importing an internal path (`…/dist/x.js`) | Use only the documented entry points |

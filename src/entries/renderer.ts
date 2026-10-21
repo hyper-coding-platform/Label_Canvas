@@ -1,5 +1,5 @@
 /**
- * @your-org/erp-label-studio/renderer
+ * @suriyaprakashm14/erp-label-studio/renderer
  *
  * React preview components only. Does not include the editor UI.
  */

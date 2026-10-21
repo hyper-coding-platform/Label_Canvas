@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import "@your-org/erp-label-studio/styles.css";
+import "@suriyaprakashm14/erp-label-studio/styles.css";
 import "./globals.css";
 
 export const metadata = { title: "Acme ERP" };

@@ -1,8 +1,17 @@
 {
-  "name": "@your-org/erp-label-studio",
+  "name": "@suriyaprakashm14/erp-label-studio",
   "version": "0.1.0",
   "description": "Embeddable label designer, deterministic label renderer and barcode SDK for React and Next.js ERP applications.",
   "license": "MIT",
+  "author": "suriyaprakashm14",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyper-coding-platform/Label_Canvas.git"
+  },
+  "homepage": "https://github.com/hyper-coding-platform/Label_Canvas#readme",
+  "bugs": {
+    "url": "https://github.com/hyper-coding-platform/Label_Canvas/issues"
+  },
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -71,7 +80,8 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "audit:prod": "npm audit --omit=dev",
     "pack:local": "node scripts/test-pack.mjs --pack-only",
-    "playground": "npm run pack:local && npm --prefix examples/nextjs-playground install --no-audit --no-fund && npm --prefix examples/nextjs-playground run dev"
+    "playground": "npm run pack:local && npm --prefix examples/nextjs-playground install --no-audit --no-fund && npm --prefix examples/nextjs-playground run dev",
+    "prepublishOnly": "node scripts/prepublish.mjs"
   },
   "peerDependencies": {
     "react": ">=18.2.0 <20.0.0",
@@ -119,5 +129,8 @@
     "vite": "8.3.4",
     "vitest": "5.0.5",
     "zxing-wasm": "3.1.6"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

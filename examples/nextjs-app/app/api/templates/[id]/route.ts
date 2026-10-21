@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { TemplateConflictError, TemplateValidationError, parseTemplate } from "@your-org/erp-label-studio/core";
+import { TemplateConflictError, TemplateValidationError, parseTemplate } from "@suriyaprakashm14/erp-label-studio/core";
 import { templateStore } from "@/lib/template-store";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {

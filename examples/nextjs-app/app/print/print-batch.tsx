@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { LabelRenderer } from "@your-org/erp-label-studio/renderer";
-import { generateLabels, printLabels, type DataRecord, type LabelTemplate } from "@your-org/erp-label-studio/core";
+import { LabelRenderer } from "@suriyaprakashm14/erp-label-studio/renderer";
+import { generateLabels, printLabels, type DataRecord, type LabelTemplate } from "@suriyaprakashm14/erp-label-studio/core";
 
 export function PrintBatch({ template, records }: { template: LabelTemplate; records: DataRecord[] }) {
   const [status, setStatus] = useState("");

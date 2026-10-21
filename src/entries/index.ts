@@ -1,8 +1,8 @@
 /**
- * @your-org/erp-label-studio
+ * @suriyaprakashm14/erp-label-studio
  *
  * Full client entry: core + renderer + headless + default editor UI.
- * Import "@your-org/erp-label-studio/styles.css" once in the host app.
+ * Import "@suriyaprakashm14/erp-label-studio/styles.css" once in the host app.
  */
 export * from "./core";
 export * from "./renderer";

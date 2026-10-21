@@ -9,7 +9,7 @@
     "start": "next start -p 3200"
   },
   "dependencies": {
-    "@your-org/erp-label-studio": "file:../../.pack-test/your-org-erp-label-studio.tgz",
+    "@suriyaprakashm14/erp-label-studio": "file:../../.pack-test/suriyaprakashm14-erp-label-studio.tgz",
     "next": "16.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1"
