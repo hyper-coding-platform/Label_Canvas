@@ -1,28 +1,55 @@
 "use client";
 
-// Manual visual-testing playground for @pythonprakash/erp-label-studio.
-// Pick a preset, edit it, check the live preview, print, export/import JSON.
+// Playground for the published npm package @pythonprakash/erp-label-studio.
+// Pick a preset, edit it, flip the sample data, check the live preview, print, export/import JSON.
+// Imports use the package's entry points the way a real app would:
+//   root      → the editor UI (LabelEditor, themes)
+//   /renderer → preview-only React component
+//   /core     → framework-free validation, rendering, printing, JSON
+//   /presets  → built-in label sizes and templates
 
-import { useMemo, useState } from "react";
-import {
-  LabelEditor,
-  LabelRenderer,
-  darkTheme,
-  getPresetTemplates,
-  getPresetSizes,
-  parseTemplate,
-  printLabels,
-  renderLabel,
-  renderNodeToSvgString,
-  serializeTemplate,
-  type LabelTemplate,
-} from "@pythonprakash/erp-label-studio";
+import dynamic from "next/dynamic";
+import { useMemo, useState, type CSSProperties } from "react";
+import { darkTheme, type LabelTemplate } from "@pythonprakash/erp-label-studio";
+import { LabelRenderer } from "@pythonprakash/erp-label-studio/renderer";
+import { parseTemplate, printLabels, renderLabel, renderNodeToSvgString, serializeTemplate } from "@pythonprakash/erp-label-studio/core";
+import { getPresetSizes, getPresetTemplates, type PresetTemplate } from "@pythonprakash/erp-label-studio/presets";
+import { SIZE_DEMO, SIZES } from "./size-demo";
 
 const STORAGE_KEY = "playground-template";
 
+// The editor is interactive-only, so render it on the client. With server rendering, browser
+// extensions that inject markup into form controls before React loads (for example the
+// "ColorPick Eyedropper" extension adds an <img> next to every colour input) cause hydration
+// mismatch warnings. The read-only LabelRenderer preview below is still server-rendered.
+const LabelEditor = dynamic(() => import("@pythonprakash/erp-label-studio").then((m) => m.LabelEditor), {
+  ssr: false,
+  loading: () => <div style={{ height: "100%", display: "grid", placeItems: "center", color: "#555", background: "#fff", border: "1px solid #dde1e6", borderRadius: 8 }}>Loading editor…</div>,
+});
+
+type Json = Record<string, unknown>;
+
+/** Immutable set of a dotted path in a plain JSON record (for the quick data buttons). */
+function setPath(record: Json, path: string, value: unknown): Json {
+  const [head, ...rest] = path.split(".");
+  const key = head!;
+  if (rest.length === 0) {
+    const next = { ...record };
+    if (value === undefined) delete next[key];
+    else next[key] = value;
+    return next;
+  }
+  const child = record[key] && typeof record[key] === "object" ? (record[key] as Json) : {};
+  return { ...record, [key]: setPath(child, rest.join("."), value) };
+}
+
+function getPath(record: Json | null, path: string): unknown {
+  return path.split(".").reduce<unknown>((v, k) => (v && typeof v === "object" ? (v as Json)[k] : undefined), record);
+}
+
 export function Playground() {
-  const presets = getPresetTemplates();
-  const [presetId, setPresetId] = useState(presets[0]!.id);
+  const presets: readonly PresetTemplate[] = useMemo(() => [SIZE_DEMO, ...getPresetTemplates()], []);
+  const [presetId, setPresetId] = useState(SIZE_DEMO.id);
   const preset = presets.find((p) => p.id === presetId)!;
 
   const [template, setTemplate] = useState<LabelTemplate>(() => structuredClone(preset.template) as LabelTemplate);
@@ -31,14 +58,19 @@ export function Playground() {
   const [message, setMessage] = useState("");
   const [importText, setImportText] = useState("");
 
-  // The record used for preview/print (edit the JSON box to test missing fields etc.).
+  // The record used for preview/print (edit the JSON box, or use the quick buttons).
   const record = useMemo(() => {
     try {
-      return JSON.parse(recordJson) as Record<string, unknown>;
+      return JSON.parse(recordJson) as Json;
     } catch {
       return null;
     }
   }, [recordJson]);
+
+  const patchRecord = (path: string, value: unknown) => {
+    if (!record) return setMessage("Record JSON is invalid.");
+    setRecordJson(JSON.stringify(setPath(record, path, value), null, 2));
+  };
 
   const loadPreset = (id: string) => {
     const p = presets.find((x) => x.id === id)!;
@@ -60,7 +92,7 @@ export function Playground() {
     if (!record) return setMessage("Record JSON is invalid.");
     const size = getPresetSizes().find((s) => s.id === preset.sizeId);
     try {
-      const r = await printLabels(template, [record], { layout: size?.layout });
+      const r = await printLabels(template, [record], size ? { layout: size.layout } : {});
       setMessage(`Print dialog opened: ${r.document.labelCount} label(s), ${r.document.skipped.length} skipped`);
     } catch (e) {
       setMessage(`Print failed: ${(e as Error).message}`);
@@ -88,12 +120,19 @@ export function Playground() {
     }
   };
 
-  const box: React.CSSProperties = { background: "#fff", border: "1px solid #dde1e6", borderRadius: 8, padding: 12 };
+  const box: CSSProperties = { background: "#fff", border: "1px solid #dde1e6", borderRadius: 8, padding: 12 };
+  const chip = (active: boolean): CSSProperties => ({ padding: "4px 12px", borderRadius: 6, border: "1px solid #1d2330", background: active ? "#1d2330" : "#fff", color: active ? "#fff" : "#1d2330", fontWeight: active ? 700 : 400, cursor: "pointer" });
+
+  const size = getPath(record, "variant.size");
+  const hasOffer = getPath(record, "pricing.offerPrice") !== undefined;
+  const lowStock = typeof getPath(record, "stock.qty") === "number" && (getPath(record, "stock.qty") as number) < 5;
+  const discontinued = getPath(record, "product.discontinued") === true;
 
   return (
     <main style={{ padding: 16, display: "grid", gap: 16 }}>
       <header style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
         <strong style={{ fontSize: 18 }}>Label Studio Playground</strong>
+        <code style={{ color: "#555" }}>@pythonprakash/erp-label-studio</code>
         <label>
           Preset:{" "}
           <select value={presetId} onChange={(e) => loadPreset(e.target.value)}>
@@ -110,13 +149,49 @@ export function Playground() {
         <button onClick={() => void print()}>Print</button>
         <button onClick={downloadSvg}>Download SVG</button>
         <button onClick={() => navigator.clipboard.writeText(serializeTemplate(template, 2)).then(() => setMessage("Template JSON copied"))}>Copy template JSON</button>
-        <button onClick={() => { const saved = localStorage.getItem(STORAGE_KEY); if (saved) { setImportText(saved); setMessage("Saved template loaded into the import box — click Import"); } else setMessage("Nothing saved yet"); }}>
+        <button
+          onClick={() => {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+              setImportText(saved);
+              setMessage("Saved template loaded into the import box — click Import");
+            } else setMessage("Nothing saved yet");
+          }}
+        >
           Load saved
         </button>
-        <span role="status" style={{ color: "#555" }}>{message}</span>
+        <span role="status" style={{ color: "#555" }}>
+          {message}
+        </span>
       </header>
 
-      {/* The editor: fills its container, so give it a height. */}
+      {/* Quick data controls: change the record and watch the conditional styles react. */}
+      <section style={{ ...box, display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }} aria-label="Sample data">
+        <span style={{ display: "flex", gap: 6, alignItems: "center" }} role="group" aria-label="Variant size">
+          <strong>Size:</strong>
+          {SIZES.map((s) => (
+            <button key={s} style={chip(size === s)} aria-pressed={size === s} onClick={() => patchRecord("variant.size", s)}>
+              {s}
+            </button>
+          ))}
+        </span>
+        <label>
+          <input type="checkbox" checked={hasOffer} onChange={(e) => patchRecord("pricing.offerPrice", e.target.checked ? 999 : undefined)} /> On sale (star fills, price bold)
+        </label>
+        <label>
+          <input type="checkbox" checked={lowStock} onChange={(e) => patchRecord("stock.qty", e.target.checked ? 2 : 12)} /> Low stock (price turns red)
+        </label>
+        <label>
+          <input type="checkbox" checked={discontinued} onChange={(e) => patchRecord("product.discontinued", e.target.checked)} /> Discontinued (barcode fades)
+        </label>
+      </section>
+
+      <section style={{ ...box, color: "#444", lineHeight: 1.6 }} aria-label="Editor tips">
+        <strong>Try it:</strong> <kbd>V</kbd> Cursor (select, move, resize) · <kbd>H</kbd> Hand (drag or arrow keys to pan; never edits) · hold <kbd>Space</kbd> to pan with any tool ·
+        Ctrl+wheel to zoom · <kbd>Esc</kbd> back to Cursor · toolbar <em>Add shape</em> and <em>Pencil</em> · select an element → <em>Conditional style → Add style rule</em>.
+      </section>
+
+      {/* The editor fills its container, so give it a height. */}
       <section style={{ height: 640 }}>
         <LabelEditor
           template={template}

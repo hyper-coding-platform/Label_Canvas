@@ -80,7 +80,7 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "audit:prod": "npm audit --omit=dev",
     "pack:local": "node scripts/test-pack.mjs --pack-only",
-    "playground": "npm run pack:local && npm --prefix examples/nextjs-playground install --no-audit --no-fund && npm --prefix examples/nextjs-playground run dev",
+    "playground": "npm --prefix examples/nextjs-playground install --no-audit --no-fund && npm --prefix examples/nextjs-playground run dev",
     "prepublishOnly": "node scripts/prepublish.mjs"
   },
   "peerDependencies": {
